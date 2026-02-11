@@ -1,25 +1,30 @@
 {
   "expo": {
-    "name": "daimoku-counter",
+    "name": "題目カウンター",
     "slug": "daimoku-counter",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "daimokucounter",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.yoshi0703.daimoku-counter",
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "唱題の回数を数えるために音声認識を使用します",
+        "NSMicrophoneUsageDescription": "唱題の音声を聞くためにマイクを使用します"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "package": "com.yoshi0703.daimokucounter"
     },
     "web": {
       "output": "static",
@@ -33,10 +38,14 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "唱題の音声を聞くためにマイクを使用します",
+          "speechRecognitionPermission": "唱題の回数を数えるために音声認識を使用します"
         }
       ]
     ],
