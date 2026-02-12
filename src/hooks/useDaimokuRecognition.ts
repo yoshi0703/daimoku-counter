@@ -15,8 +15,8 @@ try {
   // Expo Go では利用不可
 }
 
-/** 録音チャンクの長さ（秒） */
-const CHUNK_DURATION_MS = 12000;
+/** 録音チャンクの長さ（ミリ秒） */
+const CHUNK_DURATION_MS = 15000;
 
 export function useDaimokuRecognition(
   deepgramKey: string | null,
@@ -29,6 +29,7 @@ export function useDaimokuRecognition(
   const [error, setError] = useState<string | null>(null);
   const [speechAvailable, setSpeechAvailable] = useState<boolean | null>(null);
   const [mode, setMode] = useState<"native" | "cloud" | "manual">("manual");
+  const [lastTranscript, setLastTranscript] = useState<string>("");
 
   const sessionActiveRef = useRef(false);
   const counter = useRef(new DaimokuCounter());
@@ -84,6 +85,7 @@ export function useDaimokuRecognition(
     const isFinal = event.isFinal;
     const newCount = counter.current.processResult(transcript, isFinal);
     setCount(newCount);
+    setLastTranscript(transcript);
   });
 
   useSpeechRecognitionEvent("error", (event: any) => {
@@ -98,20 +100,61 @@ export function useDaimokuRecognition(
     }
   });
 
-  // ===== クラウド音声認識（チャンク録音 → API送信） =====
+  // ===== クラウド音声認識 =====
+  const processChunk = useCallback(
+    async (uri: string) => {
+      const result = await transcribeAudio(uri, deepgramKey, openaiKey);
+
+      if (result.success) {
+        setLastTranscript(result.transcript || "(無音)");
+        if (result.transcript) {
+          const chunkCount = countOccurrences(result.transcript);
+          if (chunkCount > 0) {
+            cloudCountRef.current += chunkCount;
+            setCount(cloudCountRef.current);
+          }
+        }
+      } else {
+        setError(result.error ?? "文字起こしエラー");
+        setLastTranscript(`エラー: ${result.error}`);
+      }
+    },
+    [deepgramKey, openaiKey],
+  );
+
   const startCloudChunk = useCallback(async () => {
     if (!sessionActiveRef.current) return;
 
     try {
       const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY,
-      );
+      await recording.prepareToRecordAsync({
+        isMeteringEnabled: false,
+        android: {
+          extension: ".m4a",
+          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+          audioEncoder: Audio.AndroidAudioEncoder.AAC,
+          sampleRate: 16000,
+          numberOfChannels: 1,
+          bitRate: 64000,
+        },
+        ios: {
+          extension: ".m4a",
+          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
+          audioQuality: Audio.IOSAudioQuality.MEDIUM,
+          sampleRate: 16000,
+          numberOfChannels: 1,
+          bitRate: 64000,
+        },
+        web: {
+          mimeType: "audio/webm",
+          bitsPerSecond: 64000,
+        },
+      });
       await recording.startAsync();
       recordingRef.current = recording;
       setIsListening(true);
+      setLastTranscript("録音中...");
 
-      // チャンク時間後に停止して送信
       chunkTimerRef.current = setTimeout(async () => {
         if (!sessionActiveRef.current) return;
 
@@ -121,23 +164,13 @@ export function useDaimokuRecognition(
           recordingRef.current = null;
 
           if (uri) {
-            // 非同期で文字起こし（次のチャンク録音と並行）
-            transcribeAudio(uri, deepgramKey, openaiKey).then((result) => {
-              if (result.success && result.transcript) {
-                const chunkCount = countOccurrences(result.transcript);
-                cloudCountRef.current += chunkCount;
-                setCount(cloudCountRef.current);
-              }
-              if (!result.success && result.error) {
-                console.warn("Transcription error:", result.error);
-              }
-            });
+            setLastTranscript("文字起こし中...");
+            await processChunk(uri);
           }
         } catch {
-          // 録音停止エラーは無視
+          // ignore
         }
 
-        // 次のチャンクを開始
         if (sessionActiveRef.current) {
           startCloudChunk();
         }
@@ -146,7 +179,7 @@ export function useDaimokuRecognition(
       setError(`録音エラー: ${e.message}`);
       setIsListening(false);
     }
-  }, [deepgramKey, openaiKey]);
+  }, [processChunk]);
 
   const stopCloudRecording = useCallback(async () => {
     if (chunkTimerRef.current) {
@@ -160,21 +193,16 @@ export function useDaimokuRecognition(
         const uri = recordingRef.current.getURI();
         recordingRef.current = null;
 
-        // 最後のチャンクも文字起こし
         if (uri) {
-          const result = await transcribeAudio(uri, deepgramKey, openaiKey);
-          if (result.success && result.transcript) {
-            const chunkCount = countOccurrences(result.transcript);
-            cloudCountRef.current += chunkCount;
-            setCount(cloudCountRef.current);
-          }
+          setLastTranscript("最後のチャンクを処理中...");
+          await processChunk(uri);
         }
       } catch {
         // ignore
       }
     }
     setIsListening(false);
-  }, [deepgramKey, openaiKey]);
+  }, [processChunk]);
 
   // ===== 共通タイマー =====
   const startTimer = useCallback(() => {
@@ -197,7 +225,6 @@ export function useDaimokuRecognition(
 
   // ===== 開始・停止・リセット =====
   const start = useCallback(async () => {
-    // クラウドモードの場合、マイク権限を取得
     if (mode === "cloud") {
       const { granted } = await Audio.requestPermissionsAsync();
       if (!granted) {
@@ -210,7 +237,6 @@ export function useDaimokuRecognition(
       });
     }
 
-    // ネイティブモードの場合
     if (mode === "native" && ExpoSpeechRecognitionModule) {
       const { granted } =
         await ExpoSpeechRecognitionModule.requestPermissionsAsync();
@@ -224,6 +250,7 @@ export function useDaimokuRecognition(
     cloudCountRef.current = 0;
     setCount(0);
     setError(null);
+    setLastTranscript("");
     setElapsedSeconds(0);
     sessionActiveRef.current = true;
     setIsSessionActive(true);
@@ -254,10 +281,10 @@ export function useDaimokuRecognition(
     cloudCountRef.current = 0;
     setCount(0);
     setElapsedSeconds(0);
+    setLastTranscript("");
     startTimeRef.current = null;
   }, [stop]);
 
-  // 手動タップ
   const increment = useCallback(() => {
     setCount((prev) => prev + 1);
   }, []);
@@ -274,5 +301,6 @@ export function useDaimokuRecognition(
     error,
     speechAvailable: speechAvailable ?? false,
     mode,
+    lastTranscript,
   };
 }

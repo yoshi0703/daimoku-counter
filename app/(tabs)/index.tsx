@@ -1,4 +1,4 @@
-import { View, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { useEffect, useCallback } from "react";
 import { useKeepAwake } from "expo-keep-awake";
 import * as Haptics from "expo-haptics";
@@ -14,7 +14,7 @@ import { useSessionManager } from "@/src/hooks/useSessionManager";
 import { useGoal } from "@/src/hooks/useGoal";
 import { useStats } from "@/src/hooks/useStats";
 import { useApiKeys } from "@/src/hooks/useApiKeys";
-import { COLORS, SPACING } from "@/src/constants/theme";
+import { COLORS, SPACING, FONT_SIZE } from "@/src/constants/theme";
 
 export default function CounterScreen() {
   useKeepAwake();
@@ -31,6 +31,7 @@ export default function CounterScreen() {
     increment,
     error,
     mode,
+    lastTranscript,
   } = useDaimokuRecognition(deepgramKey, openaiKey);
 
   const { saveSession } = useSessionManager();
@@ -77,6 +78,16 @@ export default function CounterScreen() {
             <SessionTimer elapsedSeconds={elapsedSeconds} />
           )}
           <RecognitionStatus isListening={isListening} error={error} />
+          {isSessionActive && lastTranscript ? (
+            <View style={styles.transcriptBox}>
+              <Text style={styles.transcriptLabel}>
+                モード: {mode} | 認識結果:
+              </Text>
+              <Text style={styles.transcriptText} numberOfLines={3}>
+                {lastTranscript}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.bottomSection}>
@@ -114,5 +125,21 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     paddingBottom: SPACING.md,
+  },
+  transcriptBox: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 8,
+    padding: SPACING.sm,
+    marginTop: SPACING.sm,
+    width: "100%",
+  },
+  transcriptLabel: {
+    fontSize: 11,
+    color: COLORS.textTertiary,
+    marginBottom: 2,
+  },
+  transcriptText: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.textSecondary,
   },
 });
