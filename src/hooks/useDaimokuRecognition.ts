@@ -1,9 +1,17 @@
-import { useRef, useState, useCallback } from "react";
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from "expo-speech-recognition";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { DaimokuCounter } from "@/src/lib/daimokuCounter";
+
+// expo-speech-recognition をランタイムで安全にインポート
+let ExpoSpeechRecognitionModule: any = null;
+let useSpeechRecognitionEvent: any = () => {};
+
+try {
+  const mod = require("expo-speech-recognition");
+  ExpoSpeechRecognitionModule = mod.ExpoSpeechRecognitionModule;
+  useSpeechRecognitionEvent = mod.useSpeechRecognitionEvent;
+} catch {
+  // Expo Go では利用不可 → 手動モードにフォールバック
+}
 
 export function useDaimokuRecognition() {
   const [count, setCount] = useState(0);
@@ -11,13 +19,20 @@ export function useDaimokuRecognition() {
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [speechAvailable, setSpeechAvailable] = useState<boolean | null>(null);
 
   const sessionActiveRef = useRef(false);
   const counter = useRef(new DaimokuCounter());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
+  // 起動時に音声認識の利用可否を判定
+  useEffect(() => {
+    setSpeechAvailable(ExpoSpeechRecognitionModule != null);
+  }, []);
+
   const startRecognition = useCallback(() => {
+    if (!ExpoSpeechRecognitionModule) return;
     ExpoSpeechRecognitionModule.start({
       lang: "ja-JP",
       interimResults: true,
@@ -28,13 +43,13 @@ export function useDaimokuRecognition() {
     });
   }, []);
 
+  // 音声認識イベント（利用可能な場合のみ動作）
   useSpeechRecognitionEvent("start", () => {
     setIsListening(true);
   });
 
   useSpeechRecognitionEvent("end", () => {
     setIsListening(false);
-    // セッション継続中なら自動リスタート（60秒タイムアウト対策）
     if (sessionActiveRef.current) {
       counter.current.onRecognitionRestart();
       setTimeout(() => {
@@ -45,14 +60,14 @@ export function useDaimokuRecognition() {
     }
   });
 
-  useSpeechRecognitionEvent("result", (event) => {
+  useSpeechRecognitionEvent("result", (event: any) => {
     const transcript = event.results[0]?.transcript ?? "";
     const isFinal = event.isFinal;
     const newCount = counter.current.processResult(transcript, isFinal);
     setCount(newCount);
   });
 
-  useSpeechRecognitionEvent("error", (event) => {
+  useSpeechRecognitionEvent("error", (event: any) => {
     setError(event.message);
     if (sessionActiveRef.current && event.error !== "not-allowed") {
       setTimeout(() => {
@@ -64,12 +79,34 @@ export function useDaimokuRecognition() {
     }
   });
 
+  // タイマー開始の共通処理
+  const startTimer = useCallback(() => {
+    startTimeRef.current = Date.now();
+    timerRef.current = setInterval(() => {
+      if (startTimeRef.current) {
+        setElapsedSeconds(
+          Math.floor((Date.now() - startTimeRef.current) / 1000),
+        );
+      }
+    }, 1000);
+  }, []);
+
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  // 音声認識モードの開始
   const start = useCallback(async () => {
-    const { granted } =
-      await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!granted) {
-      setError("マイクと音声認識の権限が必要です");
-      return;
+    if (ExpoSpeechRecognitionModule) {
+      const { granted } =
+        await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!granted) {
+        setError("マイクと音声認識の権限が必要です");
+        return;
+      }
     }
 
     counter.current.reset();
@@ -78,29 +115,22 @@ export function useDaimokuRecognition() {
     setElapsedSeconds(0);
     sessionActiveRef.current = true;
     setIsSessionActive(true);
-    startTimeRef.current = Date.now();
+    startTimer();
 
-    timerRef.current = setInterval(() => {
-      if (startTimeRef.current) {
-        setElapsedSeconds(
-          Math.floor((Date.now() - startTimeRef.current) / 1000),
-        );
-      }
-    }, 1000);
-
-    startRecognition();
-  }, [startRecognition]);
+    if (ExpoSpeechRecognitionModule) {
+      startRecognition();
+    }
+  }, [startRecognition, startTimer]);
 
   const stop = useCallback(() => {
     sessionActiveRef.current = false;
     setIsSessionActive(false);
-    ExpoSpeechRecognitionModule.stop();
+    stopTimer();
 
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (ExpoSpeechRecognitionModule) {
+      ExpoSpeechRecognitionModule.stop();
     }
-  }, []);
+  }, [stopTimer]);
 
   const reset = useCallback(() => {
     stop();
@@ -110,6 +140,11 @@ export function useDaimokuRecognition() {
     startTimeRef.current = null;
   }, [stop]);
 
+  // 手動タップでカウントを+1
+  const increment = useCallback(() => {
+    setCount((prev) => prev + 1);
+  }, []);
+
   return {
     count,
     isListening,
@@ -118,6 +153,8 @@ export function useDaimokuRecognition() {
     start,
     stop,
     reset,
+    increment,
     error,
+    speechAvailable: speechAvailable ?? false,
   };
 }

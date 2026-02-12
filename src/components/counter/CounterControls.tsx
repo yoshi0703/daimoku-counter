@@ -3,14 +3,37 @@ import { COLORS, SPACING, TOUCH_TARGET, FONT_SIZE } from "@/src/constants/theme"
 
 interface Props {
   isSessionActive: boolean;
+  speechAvailable: boolean;
   onStart: () => void;
   onStop: () => void;
+  onTap: () => void;
 }
 
-export function CounterControls({ isSessionActive, onStart, onStop }: Props) {
+export function CounterControls({
+  isSessionActive,
+  speechAvailable,
+  onStart,
+  onStop,
+  onTap,
+}: Props) {
   if (isSessionActive) {
     return (
       <View style={styles.container}>
+        {/* 手動モード: タップカウントボタン */}
+        {!speechAvailable && (
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              styles.tapButton,
+              pressed && styles.tapPressed,
+            ]}
+            onPress={onTap}
+          >
+            <Text style={styles.tapText}>南無妙法蓮華経</Text>
+            <Text style={styles.tapHint}>タップでカウント</Text>
+          </Pressable>
+        )}
+
         <Pressable
           style={({ pressed }) => [
             styles.button,
@@ -36,8 +59,15 @@ export function CounterControls({ isSessionActive, onStart, onStop }: Props) {
         ]}
         onPress={onStart}
       >
-        <Text style={styles.startText}>唱題を始める</Text>
+        <Text style={styles.startText}>
+          {speechAvailable ? "唱題を始める" : "カウントを始める"}
+        </Text>
       </Pressable>
+      {!speechAvailable && (
+        <Text style={styles.modeHint}>
+          手動モード（音声認識はDevelopment Buildで利用可）
+        </Text>
+      )}
     </View>
   );
 }
@@ -46,6 +76,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     paddingHorizontal: SPACING.xl,
+    gap: SPACING.md,
   },
   button: {
     flexDirection: "row",
@@ -66,6 +97,20 @@ const styles = StyleSheet.create({
   stopButton: {
     backgroundColor: COLORS.red,
   },
+  tapButton: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    flexDirection: "column",
+    height: TOUCH_TARGET.recommended + 40,
+    borderRadius: 16,
+    gap: SPACING.xs,
+  },
+  tapPressed: {
+    opacity: 0.6,
+    transform: [{ scale: 0.96 }],
+    backgroundColor: COLORS.border,
+  },
   startText: {
     color: COLORS.background,
     fontSize: FONT_SIZE.lg,
@@ -76,10 +121,24 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZE.lg,
     fontWeight: "600",
   },
+  tapText: {
+    color: COLORS.text,
+    fontSize: FONT_SIZE.xl,
+    fontWeight: "600",
+  },
+  tapHint: {
+    color: COLORS.textTertiary,
+    fontSize: FONT_SIZE.xs,
+  },
   stopIcon: {
     width: 16,
     height: 16,
     borderRadius: 3,
     backgroundColor: COLORS.background,
+  },
+  modeHint: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textTertiary,
+    textAlign: "center",
   },
 });

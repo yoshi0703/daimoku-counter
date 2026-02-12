@@ -25,7 +25,9 @@ export default function CounterScreen() {
     elapsedSeconds,
     start,
     stop,
+    increment,
     error,
+    speechAvailable,
   } = useDaimokuRecognition();
 
   const { saveSession } = useSessionManager();
@@ -50,6 +52,11 @@ export default function CounterScreen() {
     await start();
   }, [start]);
 
+  const handleTap = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    increment();
+  }, [increment]);
+
   const displayTotal = todayTotal + (isSessionActive ? count : 0);
   const dailyTarget = goal?.daily_target ?? 100;
 
@@ -71,8 +78,10 @@ export default function CounterScreen() {
         <View style={styles.bottomSection}>
           <CounterControls
             isSessionActive={isSessionActive}
+            speechAvailable={speechAvailable}
             onStart={handleStart}
             onStop={handleStop}
+            onTap={handleTap}
           />
         </View>
       </View>
