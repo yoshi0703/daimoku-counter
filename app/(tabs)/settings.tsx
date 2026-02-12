@@ -2,21 +2,33 @@ import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { GoalSetting } from "@/src/components/settings/GoalSetting";
+import { ApiKeySettings } from "@/src/components/settings/ApiKeySettings";
 import { useGoal } from "@/src/hooks/useGoal";
+import { useApiKeys } from "@/src/hooks/useApiKeys";
 import { COLORS, FONT_SIZE, SPACING } from "@/src/constants/theme";
 
 export default function SettingsScreen() {
   const { goal, updateGoal } = useGoal();
+  const { deepgramKey, openaiKey, saveDeepgramKey, saveOpenaiKey } =
+    useApiKeys();
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
       >
         <GoalSetting
           currentTarget={goal?.daily_target ?? 100}
           onUpdate={updateGoal}
+        />
+
+        <ApiKeySettings
+          deepgramKey={deepgramKey}
+          openaiKey={openaiKey}
+          onSaveDeepgram={saveDeepgramKey}
+          onSaveOpenai={saveOpenaiKey}
         />
 
         <View style={styles.about}>
