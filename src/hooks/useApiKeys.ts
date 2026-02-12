@@ -7,8 +7,21 @@ import {
   useContext,
 } from "react";
 import type { ReactNode } from "react";
-import * as SecureStore from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React from "react";
+
+// SecureStore をランタイムで安全にインポート（Expo Go で失敗する場合あり）
+let SecureStore: {
+  getItemAsync: (key: string) => Promise<string | null>;
+  setItemAsync: (key: string, value: string) => Promise<void>;
+  deleteItemAsync: (key: string) => Promise<void>;
+} | null = null;
+
+try {
+  SecureStore = require("expo-secure-store");
+} catch {
+  // fallback to AsyncStorage
+}
 
 const KEYS = {
   deepgram: "daimoku_deepgram_key",
@@ -18,6 +31,44 @@ const KEYS = {
 const SUPABASE_URL = "https://yydkvjaytggaqbhcookk.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZGt2amF5dGdnYXFiaGNvb2trIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5MTQ5NzEsImV4cCI6MjA4MjQ5MDk3MX0.a4U_5CpDag6nGQIaFTj5qwq3ajR6t9WhSjQpBPNnB2k";
+
+// ストレージ抽象化: SecureStore → AsyncStorage フォールバック
+async function storageGet(key: string): Promise<string | null> {
+  try {
+    if (SecureStore) return await SecureStore.getItemAsync(key);
+  } catch {
+    // SecureStore failed, try AsyncStorage
+  }
+  return AsyncStorage.getItem(key);
+}
+
+async function storageSet(key: string, value: string): Promise<void> {
+  try {
+    if (SecureStore) {
+      await SecureStore.setItemAsync(key, value);
+      return;
+    }
+  } catch {
+    // SecureStore failed, fall through to AsyncStorage
+  }
+  await AsyncStorage.setItem(key, value);
+}
+
+async function storageDelete(key: string): Promise<void> {
+  try {
+    if (SecureStore) {
+      await SecureStore.deleteItemAsync(key);
+    }
+  } catch {
+    // ignore
+  }
+  // 両方から削除（移行時の残りデータもクリア）
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch {
+    // ignore
+  }
+}
 
 interface TokenCache {
   token: string;
@@ -46,8 +97,8 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       const [dg, oa] = await Promise.all([
-        SecureStore.getItemAsync(KEYS.deepgram),
-        SecureStore.getItemAsync(KEYS.openai),
+        storageGet(KEYS.deepgram),
+        storageGet(KEYS.openai),
       ]);
       setDeepgramKey(dg);
       setOpenaiKey(oa);
@@ -58,10 +109,10 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
   const saveDeepgramKey = useCallback(async (key: string) => {
     const trimmed = key.trim();
     if (trimmed) {
-      await SecureStore.setItemAsync(KEYS.deepgram, trimmed);
+      await storageSet(KEYS.deepgram, trimmed);
       setDeepgramKey(trimmed);
     } else {
-      await SecureStore.deleteItemAsync(KEYS.deepgram);
+      await storageDelete(KEYS.deepgram);
       setDeepgramKey(null);
     }
     tokenCacheRef.current = null;
@@ -70,10 +121,10 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
   const saveOpenaiKey = useCallback(async (key: string) => {
     const trimmed = key.trim();
     if (trimmed) {
-      await SecureStore.setItemAsync(KEYS.openai, trimmed);
+      await storageSet(KEYS.openai, trimmed);
       setOpenaiKey(trimmed);
     } else {
-      await SecureStore.deleteItemAsync(KEYS.openai);
+      await storageDelete(KEYS.openai);
       setOpenaiKey(null);
     }
   }, []);
