@@ -13,10 +13,13 @@ import { useDaimokuRecognition } from "@/src/hooks/useDaimokuRecognition";
 import { useSessionManager } from "@/src/hooks/useSessionManager";
 import { useGoal } from "@/src/hooks/useGoal";
 import { useStats } from "@/src/hooks/useStats";
+import { useApiKeys } from "@/src/hooks/useApiKeys";
 import { COLORS, SPACING } from "@/src/constants/theme";
 
 export default function CounterScreen() {
   useKeepAwake();
+
+  const { deepgramKey, openaiKey } = useApiKeys();
 
   const {
     count,
@@ -27,8 +30,8 @@ export default function CounterScreen() {
     stop,
     increment,
     error,
-    speechAvailable,
-  } = useDaimokuRecognition();
+    mode,
+  } = useDaimokuRecognition(deepgramKey, openaiKey);
 
   const { saveSession } = useSessionManager();
   const { goal } = useGoal();
@@ -39,7 +42,7 @@ export default function CounterScreen() {
   }, [fetchTodayTotal]);
 
   const handleStop = useCallback(async () => {
-    stop();
+    await stop();
     if (count > 0) {
       await saveSession(count, elapsedSeconds);
       await fetchTodayTotal();
@@ -59,6 +62,7 @@ export default function CounterScreen() {
 
   const displayTotal = todayTotal + (isSessionActive ? count : 0);
   const dailyTarget = goal?.daily_target ?? 100;
+  const usesSpeech = mode === "native" || mode === "cloud";
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -78,7 +82,7 @@ export default function CounterScreen() {
         <View style={styles.bottomSection}>
           <CounterControls
             isSessionActive={isSessionActive}
-            speechAvailable={speechAvailable}
+            speechAvailable={usesSpeech}
             onStart={handleStart}
             onStop={handleStop}
             onTap={handleTap}
