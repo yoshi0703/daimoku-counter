@@ -6,6 +6,36 @@ interface TranscriptionResult {
   transcript: string;
   success: boolean;
   error?: string;
+  /** search パラメータによる音響マッチング件数 */
+  searchHits?: number;
+}
+
+/**
+ * Deepgram Nova-3 APIのURLを構築。
+ * keyterm（キーターム認識ブースト）と search（音響パターンマッチング）を使用。
+ */
+function buildDeepgramUrl(): string {
+  const params = new URLSearchParams({
+    model: "nova-3",
+    language: "ja",
+    punctuate: "true",
+    smart_format: "false",
+    utterances: "true",
+  });
+
+  // Nova-3 専用: keyterm 認識ブースト（最大90%精度向上）
+  // keywords パラメータは Nova-2 以前専用なので使わない
+  const keyterms = [
+    "南無妙法蓮華経",
+    "なんみょうほうれんげきょう",
+    "なむみょうほうれんげきょう",
+  ];
+  keyterms.forEach((term) => params.append("keyterm", term));
+
+  // 音響パターンマッチング: テキストマッチより正確にカウント可能
+  params.append("search", "南無妙法蓮華経");
+
+  return `https://api.deepgram.com/v1/listen?${params.toString()}`;
 }
 
 /**
@@ -14,29 +44,49 @@ interface TranscriptionResult {
 async function transcribeWithDeepgram(
   audioUri: string,
   apiKey: string,
+  isJwt = false,
 ): Promise<TranscriptionResult> {
   try {
-    const response = await FileSystem.uploadAsync(
-      "https://api.deepgram.com/v1/listen?model=nova-3&language=ja&punctuate=false&smart_format=false",
-      audioUri,
-      {
-        headers: {
-          Authorization: `Token ${apiKey}`,
-        },
-        httpMethod: "POST",
-        uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-        mimeType: "audio/m4a",
+    const url = buildDeepgramUrl();
+
+    // 永続キーは "Token xxx"、JWT は "Bearer xxx" で認証
+    const authHeader = isJwt
+      ? `Bearer ${apiKey}`
+      : `Token ${apiKey}`;
+
+    const response = await FileSystem.uploadAsync(url, audioUri, {
+      headers: {
+        Authorization: authHeader,
       },
-    );
+      httpMethod: "POST",
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      mimeType: "audio/m4a",
+    });
 
     if (response.status !== 200) {
-      return { transcript: "", success: false, error: `Deepgram error: ${response.status}` };
+      return {
+        transcript: "",
+        success: false,
+        error: `Deepgram error: ${response.status} ${response.body?.slice(0, 200)}`,
+      };
     }
 
     const data = JSON.parse(response.body);
     const transcript =
       data?.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "";
-    return { transcript, success: true };
+
+    // search 結果から音響マッチング件数を取得
+    const searchResults = data?.results?.channels?.[0]?.search?.results;
+    let searchHits = 0;
+    if (searchResults && Array.isArray(searchResults)) {
+      for (const result of searchResults) {
+        if (result.hits && Array.isArray(result.hits)) {
+          searchHits += result.hits.length;
+        }
+      }
+    }
+
+    return { transcript, success: true, searchHits };
   } catch (e: any) {
     return { transcript: "", success: false, error: e.message };
   }
@@ -69,7 +119,11 @@ async function transcribeWithOpenAI(
     );
 
     if (response.status !== 200) {
-      return { transcript: "", success: false, error: `OpenAI error: ${response.status}` };
+      return {
+        transcript: "",
+        success: false,
+        error: `OpenAI error: ${response.status}`,
+      };
     }
 
     const data = JSON.parse(response.body);
@@ -87,12 +141,19 @@ export async function transcribeAudio(
   audioUri: string,
   deepgramKey: string | null,
   openaiKey: string | null,
+  deepgramToken?: string | null,
 ): Promise<TranscriptionResult> {
-  // Deepgram を優先
+  // JWT トークンがあればそちらを優先
+  if (deepgramToken) {
+    const result = await transcribeWithDeepgram(audioUri, deepgramToken, true);
+    if (result.success) return result;
+    console.warn("Deepgram token auth failed, trying key:", result.error);
+  }
+
+  // 永続キーで試行
   if (deepgramKey) {
     const result = await transcribeWithDeepgram(audioUri, deepgramKey);
     if (result.success) return result;
-    // Deepgram 失敗 → OpenAI にフォールバック
     console.warn("Deepgram failed, falling back to OpenAI:", result.error);
   }
 

@@ -3,8 +3,7 @@ import {
   useAudioRecorder,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
-  IOSOutputFormat,
-  AudioQuality,
+  RecordingPresets,
 } from "expo-audio";
 import type { AudioRecorder } from "expo-audio";
 import { DaimokuCounter, countOccurrences } from "@/src/lib/daimokuCounter";
@@ -25,32 +24,10 @@ try {
 /** 録音チャンクの長さ（ミリ秒） */
 const CHUNK_DURATION_MS = 15000;
 
-/** 録音設定: 16kHz モノラル AAC */
-const RECORDING_OPTIONS = {
-  extension: ".m4a",
-  sampleRate: 16000,
-  numberOfChannels: 1,
-  bitRate: 64000,
-  android: {
-    outputFormat: "mpeg4" as const,
-    audioEncoder: "aac" as const,
-  },
-  ios: {
-    outputFormat: IOSOutputFormat.MPEG4AAC,
-    audioQuality: AudioQuality.MEDIUM,
-    linearPCMBitDepth: 16,
-    linearPCMIsBigEndian: false,
-    linearPCMIsFloat: false,
-  },
-  web: {
-    mimeType: "audio/webm" as const,
-    bitsPerSecond: 64000,
-  },
-};
-
 export function useDaimokuRecognition(
   deepgramKey: string | null,
   openaiKey: string | null,
+  getDeepgramToken?: () => Promise<string | null>,
 ) {
   const [count, setCount] = useState(0);
   const [isListening, setIsListening] = useState(false);
@@ -68,8 +45,8 @@ export function useDaimokuRecognition(
   const chunkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cloudCountRef = useRef(0);
 
-  // expo-audio の AudioRecorder フック
-  const recorder = useAudioRecorder(RECORDING_OPTIONS);
+  // expo-audio の AudioRecorder フック（HIGH_QUALITY プリセット使用）
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderRef = useRef<AudioRecorder>(recorder);
   recorderRef.current = recorder;
 
@@ -137,29 +114,49 @@ export function useDaimokuRecognition(
   // ===== クラウド音声認識 =====
   const processChunk = useCallback(
     async (uri: string) => {
-      const result = await transcribeAudio(uri, deepgramKey, openaiKey);
+      // JWT トークンを取得（Edge Function 経由）
+      const token = getDeepgramToken ? await getDeepgramToken() : null;
+      const result = await transcribeAudio(uri, deepgramKey, openaiKey, token);
 
       if (result.success) {
-        setLastTranscript(result.transcript || "(無音)");
-        if (result.transcript) {
-          const chunkCount = countOccurrences(result.transcript);
-          if (chunkCount > 0) {
-            cloudCountRef.current += chunkCount;
-            setCount(cloudCountRef.current);
-          }
+        // searchHits（音響マッチング）があればそちらを優先、なければテキストマッチ
+        const textCount = result.transcript
+          ? countOccurrences(result.transcript)
+          : 0;
+        const chunkCount = result.searchHits ?? textCount;
+
+        const debugInfo = result.searchHits != null
+          ? `[音響:${result.searchHits} テキスト:${textCount}]`
+          : `[テキスト:${textCount}]`;
+
+        setLastTranscript(
+          result.transcript
+            ? `${debugInfo} ${result.transcript}`
+            : "(無音)",
+        );
+
+        if (chunkCount > 0) {
+          cloudCountRef.current += chunkCount;
+          setCount(cloudCountRef.current);
         }
       } else {
         setError(result.error ?? "文字起こしエラー");
         setLastTranscript(`エラー: ${result.error}`);
       }
     },
-    [deepgramKey, openaiKey],
+    [deepgramKey, openaiKey, getDeepgramToken],
   );
 
   const startCloudChunk = useCallback(async () => {
     if (!sessionActiveRef.current) return;
 
     try {
+      // 録音直前に AudioMode を設定（順序が重要）
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+      });
+
       const rec = recorderRef.current;
       await rec.prepareToRecordAsync();
       rec.record();
@@ -187,6 +184,7 @@ export function useDaimokuRecognition(
       }, CHUNK_DURATION_MS);
     } catch (e: any) {
       setError(`録音エラー: ${e.message}`);
+      setLastTranscript(`録音エラー詳細: ${e.message}`);
       setIsListening(false);
     }
   }, [processChunk]);
@@ -239,10 +237,6 @@ export function useDaimokuRecognition(
         setError("マイクの権限が必要です");
         return;
       }
-      await setAudioModeAsync({
-        allowsRecording: true,
-        playsInSilentMode: true,
-      });
     }
 
     if (mode === "native" && ExpoSpeechRecognitionModule) {
