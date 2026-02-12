@@ -19,7 +19,7 @@ import { COLORS, SPACING, FONT_SIZE } from "@/src/constants/theme";
 export default function CounterScreen() {
   useKeepAwake();
 
-  const { deepgramKey, openaiKey } = useApiKeys();
+  const { deepgramKey, openaiKey, getDeepgramToken } = useApiKeys();
 
   const {
     count,
@@ -32,7 +32,7 @@ export default function CounterScreen() {
     error,
     mode,
     lastTranscript,
-  } = useDaimokuRecognition(deepgramKey, openaiKey);
+  } = useDaimokuRecognition(deepgramKey, openaiKey, getDeepgramToken);
 
   const { saveSession } = useSessionManager();
   const { goal } = useGoal();

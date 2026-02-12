@@ -47,7 +47,9 @@
           "microphonePermission": "唱題の音声を聞くためにマイクを使用します",
           "speechRecognitionPermission": "唱題の回数を数えるために音声認識を使用します"
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
