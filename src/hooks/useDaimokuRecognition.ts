@@ -45,6 +45,14 @@ export function useDaimokuRecognition(
   const chunkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cloudCountRef = useRef(0);
 
+  // Ref でキーを保持（クロージャーの stale 値問題を回避）
+  const deepgramKeyRef = useRef(deepgramKey);
+  deepgramKeyRef.current = deepgramKey;
+  const openaiKeyRef = useRef(openaiKey);
+  openaiKeyRef.current = openaiKey;
+  const getDeepgramTokenRef = useRef(getDeepgramToken);
+  getDeepgramTokenRef.current = getDeepgramToken;
+
   // expo-audio の AudioRecorder フック（HIGH_QUALITY プリセット使用）
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderRef = useRef<AudioRecorder>(recorder);
@@ -112,40 +120,40 @@ export function useDaimokuRecognition(
   });
 
   // ===== クラウド音声認識 =====
-  const processChunk = useCallback(
-    async (uri: string) => {
-      // JWT トークンを取得（Edge Function 経由）
-      const token = getDeepgramToken ? await getDeepgramToken() : null;
-      const result = await transcribeAudio(uri, deepgramKey, openaiKey, token);
+  const processChunk = useCallback(async (uri: string) => {
+    // Ref から最新の値を取得（stale closure 回避）
+    const dgKey = deepgramKeyRef.current;
+    const oaKey = openaiKeyRef.current;
+    const getToken = getDeepgramTokenRef.current;
 
-      if (result.success) {
-        // searchHits（音響マッチング）があればそちらを優先、なければテキストマッチ
-        const textCount = result.transcript
-          ? countOccurrences(result.transcript)
-          : 0;
-        const chunkCount = result.searchHits ?? textCount;
+    const token = getToken ? await getToken() : null;
+    const result = await transcribeAudio(uri, dgKey, oaKey, token);
 
-        const debugInfo = result.searchHits != null
-          ? `[音響:${result.searchHits} テキスト:${textCount}]`
-          : `[テキスト:${textCount}]`;
+    if (result.success) {
+      const textCount = result.transcript
+        ? countOccurrences(result.transcript)
+        : 0;
+      const chunkCount = result.searchHits ?? textCount;
 
-        setLastTranscript(
-          result.transcript
-            ? `${debugInfo} ${result.transcript}`
-            : "(無音)",
-        );
+      const debugInfo = result.searchHits != null
+        ? `[音響:${result.searchHits} テキスト:${textCount}]`
+        : `[テキスト:${textCount}]`;
 
-        if (chunkCount > 0) {
-          cloudCountRef.current += chunkCount;
-          setCount(cloudCountRef.current);
-        }
-      } else {
-        setError(result.error ?? "文字起こしエラー");
-        setLastTranscript(`エラー: ${result.error}`);
+      setLastTranscript(
+        result.transcript
+          ? `${debugInfo} ${result.transcript}`
+          : "(無音)",
+      );
+
+      if (chunkCount > 0) {
+        cloudCountRef.current += chunkCount;
+        setCount(cloudCountRef.current);
       }
-    },
-    [deepgramKey, openaiKey, getDeepgramToken],
-  );
+    } else {
+      setError(result.error ?? "文字起こしエラー");
+      setLastTranscript(`エラー: ${result.error}`);
+    }
+  }, []);
 
   const startCloudChunk = useCallback(async () => {
     if (!sessionActiveRef.current) return;

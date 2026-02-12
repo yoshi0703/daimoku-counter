@@ -1,5 +1,5 @@
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { COLORS, FONT_SIZE, SPACING, TOUCH_TARGET } from "@/src/constants/theme";
 
 interface Props {
@@ -19,12 +19,24 @@ export function ApiKeySettings({
   const [oaInput, setOaInput] = useState(openaiKey ?? "");
   const [saved, setSaved] = useState(false);
 
+  // props（Context）からの値が変わったら入力欄を同期
+  useEffect(() => {
+    if (deepgramKey != null) setDgInput(deepgramKey);
+  }, [deepgramKey]);
+
+  useEffect(() => {
+    if (openaiKey != null) setOaInput(openaiKey);
+  }, [openaiKey]);
+
   const handleSave = () => {
     onSaveDeepgram(dgInput);
     onSaveOpenai(oaInput);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
+
+  const dgStatus = deepgramKey ? `設定済み (${deepgramKey.slice(0, 6)}...)` : "未設定";
+  const oaStatus = openaiKey ? `設定済み (${openaiKey.slice(0, 6)}...)` : "未設定";
 
   return (
     <View style={styles.container}>
@@ -33,6 +45,14 @@ export function ApiKeySettings({
         APIキーを設定すると、音声認識で自動カウントできます。
         Deepgram優先、なければOpenAIを使用します。
       </Text>
+      <View style={styles.statusRow}>
+        <Text style={[styles.statusText, deepgramKey ? styles.statusOk : styles.statusNg]}>
+          Deepgram: {dgStatus}
+        </Text>
+        <Text style={[styles.statusText, openaiKey ? styles.statusOk : styles.statusNg]}>
+          OpenAI: {oaStatus}
+        </Text>
+      </View>
 
       <View style={styles.field}>
         <Text style={styles.label}>Deepgram APIキー</Text>
@@ -139,5 +159,18 @@ const styles = StyleSheet.create({
     color: COLORS.background,
     fontSize: FONT_SIZE.md,
     fontWeight: "600",
+  },
+  statusRow: {
+    marginBottom: SPACING.md,
+    gap: 4,
+  },
+  statusText: {
+    fontSize: 12,
+  },
+  statusOk: {
+    color: COLORS.green,
+  },
+  statusNg: {
+    color: COLORS.textTertiary,
   },
 });
