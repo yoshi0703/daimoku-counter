@@ -1,5 +1,12 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Audio } from "expo-av";
+import {
+  useAudioRecorder,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  IOSOutputFormat,
+  AudioQuality,
+} from "expo-audio";
+import type { AudioRecorder } from "expo-audio";
 import { DaimokuCounter, countOccurrences } from "@/src/lib/daimokuCounter";
 import { transcribeAudio } from "@/src/lib/transcriptionService";
 
@@ -18,6 +25,29 @@ try {
 /** 録音チャンクの長さ（ミリ秒） */
 const CHUNK_DURATION_MS = 15000;
 
+/** 録音設定: 16kHz モノラル AAC */
+const RECORDING_OPTIONS = {
+  extension: ".m4a",
+  sampleRate: 16000,
+  numberOfChannels: 1,
+  bitRate: 64000,
+  android: {
+    outputFormat: "mpeg4" as const,
+    audioEncoder: "aac" as const,
+  },
+  ios: {
+    outputFormat: IOSOutputFormat.MPEG4AAC,
+    audioQuality: AudioQuality.MEDIUM,
+    linearPCMBitDepth: 16,
+    linearPCMIsBigEndian: false,
+    linearPCMIsFloat: false,
+  },
+  web: {
+    mimeType: "audio/webm" as const,
+    bitsPerSecond: 64000,
+  },
+};
+
 export function useDaimokuRecognition(
   deepgramKey: string | null,
   openaiKey: string | null,
@@ -35,9 +65,13 @@ export function useDaimokuRecognition(
   const counter = useRef(new DaimokuCounter());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number | null>(null);
-  const recordingRef = useRef<Audio.Recording | null>(null);
   const chunkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cloudCountRef = useRef(0);
+
+  // expo-audio の AudioRecorder フック
+  const recorder = useAudioRecorder(RECORDING_OPTIONS);
+  const recorderRef = useRef<AudioRecorder>(recorder);
+  recorderRef.current = recorder;
 
   // 起動時にモード判定
   useEffect(() => {
@@ -126,32 +160,9 @@ export function useDaimokuRecognition(
     if (!sessionActiveRef.current) return;
 
     try {
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync({
-        isMeteringEnabled: false,
-        android: {
-          extension: ".m4a",
-          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-          audioEncoder: Audio.AndroidAudioEncoder.AAC,
-          sampleRate: 16000,
-          numberOfChannels: 1,
-          bitRate: 64000,
-        },
-        ios: {
-          extension: ".m4a",
-          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
-          audioQuality: Audio.IOSAudioQuality.MEDIUM,
-          sampleRate: 16000,
-          numberOfChannels: 1,
-          bitRate: 64000,
-        },
-        web: {
-          mimeType: "audio/webm",
-          bitsPerSecond: 64000,
-        },
-      });
-      await recording.startAsync();
-      recordingRef.current = recording;
+      const rec = recorderRef.current;
+      await rec.prepareToRecordAsync();
+      rec.record();
       setIsListening(true);
       setLastTranscript("録音中...");
 
@@ -159,9 +170,8 @@ export function useDaimokuRecognition(
         if (!sessionActiveRef.current) return;
 
         try {
-          await recording.stopAndUnloadAsync();
-          const uri = recording.getURI();
-          recordingRef.current = null;
+          await rec.stop();
+          const uri = rec.uri;
 
           if (uri) {
             setLastTranscript("文字起こし中...");
@@ -187,19 +197,17 @@ export function useDaimokuRecognition(
       chunkTimerRef.current = null;
     }
 
-    if (recordingRef.current) {
-      try {
-        await recordingRef.current.stopAndUnloadAsync();
-        const uri = recordingRef.current.getURI();
-        recordingRef.current = null;
+    try {
+      const rec = recorderRef.current;
+      await rec.stop();
+      const uri = rec.uri;
 
-        if (uri) {
-          setLastTranscript("最後のチャンクを処理中...");
-          await processChunk(uri);
-        }
-      } catch {
-        // ignore
+      if (uri) {
+        setLastTranscript("最後のチャンクを処理中...");
+        await processChunk(uri);
       }
+    } catch {
+      // ignore
     }
     setIsListening(false);
   }, [processChunk]);
@@ -226,14 +234,14 @@ export function useDaimokuRecognition(
   // ===== 開始・停止・リセット =====
   const start = useCallback(async () => {
     if (mode === "cloud") {
-      const { granted } = await Audio.requestPermissionsAsync();
+      const { granted } = await requestRecordingPermissionsAsync();
       if (!granted) {
         setError("マイクの権限が必要です");
         return;
       }
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
       });
     }
 
