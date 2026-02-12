@@ -1,5 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  createContext,
+  useContext,
+} from "react";
+import type { ReactNode } from "react";
 import * as SecureStore from "expo-secure-store";
+import React from "react";
 
 const KEYS = {
   deepgram: "daimoku_deepgram_key",
@@ -8,19 +17,30 @@ const KEYS = {
 
 const SUPABASE_URL = "https://yydkvjaytggaqbhcookk.supabase.co";
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZGt2amF5dGdnYXFiaGNvb2trIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5MTQ5NzEsImV4cCI6MjA4MjQ5MDk3MX0.a4U_5CpDag6nGQIaFTj9qwq3ajR6t9WhSjQpBPNnB2k";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZGt2amF5dGdnYXFiaGNvb2trIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5MTQ5NzEsImV4cCI6MjA4MjQ5MDk3MX0.a4U_5CpDag6nGQIaFTj5qwq3ajR6t9WhSjQpBPNnB2k";
 
 interface TokenCache {
   token: string;
-  expiresAt: number; // Unix ms
+  expiresAt: number;
 }
 
-export function useApiKeys() {
+interface ApiKeysContextValue {
+  deepgramKey: string | null;
+  openaiKey: string | null;
+  loading: boolean;
+  hasAnyKey: boolean;
+  saveDeepgramKey: (key: string) => Promise<void>;
+  saveOpenaiKey: (key: string) => Promise<void>;
+  getDeepgramToken: () => Promise<string | null>;
+}
+
+const ApiKeysContext = createContext<ApiKeysContextValue | null>(null);
+
+export function ApiKeysProvider({ children }: { children: ReactNode }) {
   const [deepgramKey, setDeepgramKey] = useState<string | null>(null);
   const [openaiKey, setOpenaiKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Deepgram JWT トークンキャッシュ
   const tokenCacheRef = useRef<TokenCache | null>(null);
 
   useEffect(() => {
@@ -44,7 +64,6 @@ export function useApiKeys() {
       await SecureStore.deleteItemAsync(KEYS.deepgram);
       setDeepgramKey(null);
     }
-    // キー変更時はトークンキャッシュをクリア
     tokenCacheRef.current = null;
   }, []);
 
@@ -59,12 +78,7 @@ export function useApiKeys() {
     }
   }, []);
 
-  /**
-   * Supabase Edge Function 経由で Deepgram 短期トークンを取得。
-   * キャッシュが有効ならそれを返す（期限の2分前に更新）。
-   */
   const getDeepgramToken = useCallback(async (): Promise<string | null> => {
-    // キャッシュが有効（期限の2分前まで）ならそのまま返す
     const cache = tokenCacheRef.current;
     if (cache && cache.expiresAt - Date.now() > 120_000) {
       return cache.token;
@@ -83,10 +97,7 @@ export function useApiKeys() {
         },
       );
 
-      if (!response.ok) {
-        console.warn("Token fetch failed:", response.status);
-        return null;
-      }
+      if (!response.ok) return null;
 
       const data = await response.json();
       if (data.token) {
@@ -97,15 +108,14 @@ export function useApiKeys() {
         return data.token;
       }
       return null;
-    } catch (e) {
-      console.warn("Token fetch error:", e);
+    } catch {
       return null;
     }
   }, []);
 
   const hasAnyKey = deepgramKey != null || openaiKey != null;
 
-  return {
+  const value: ApiKeysContextValue = {
     deepgramKey,
     openaiKey,
     loading,
@@ -114,4 +124,14 @@ export function useApiKeys() {
     saveOpenaiKey,
     getDeepgramToken,
   };
+
+  return React.createElement(ApiKeysContext.Provider, { value }, children);
+}
+
+export function useApiKeys(): ApiKeysContextValue {
+  const ctx = useContext(ApiKeysContext);
+  if (!ctx) {
+    throw new Error("useApiKeys must be used within ApiKeysProvider");
+  }
+  return ctx;
 }
