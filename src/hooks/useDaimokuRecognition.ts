@@ -30,12 +30,13 @@ type CloudRecorderEngine = "expo-audio" | "expo-av";
 type RecognitionMode = "native" | "cloud" | "local" | "manual";
 
 // Expo Go 向けローカル推定モード（メータリングベース）
+// v2: 実録音(51回/60秒)で検証済みパラメータ — 高速唱題(~1.18s/cycle)対応
 const LOCAL_PROGRESS_UPDATE_MS = 120;
 const LOCAL_MIN_GAP_MS = 480;
 const LOCAL_MAX_GAP_MS = 1700;
-const LOCAL_THRESHOLD_OFFSET_DB = 1.0;
-const LOCAL_THRESHOLD_FLOOR_DB = -38;
-const LOCAL_PEAK_PROMINENCE_DB = 0.30;
+const LOCAL_THRESHOLD_OFFSET_DB = 2.0;   // 1.0→2.0: ノイズ耐性向上
+const LOCAL_THRESHOLD_FLOOR_DB = -35;    // -38→-35: 微弱ノイズ除外
+const LOCAL_PEAK_PROMINENCE_DB = 2.5;    // 0.30→2.5: 偽陽性の大幅削減
 
 export function useDaimokuRecognition(
   deepgramKey: string | null,
@@ -68,6 +69,7 @@ export function useDaimokuRecognition(
   const localPrevPrevDbRef = useRef<number | null>(null);
   const localPrevSampleTimeMsRef = useRef<number | null>(null);
   const localRecentIntervalsRef = useRef<number[]>([]);
+  const lastRecordingUriRef = useRef<string | null>(null);
 
   // Ref でキーを保持（クロージャーの stale 値問題を回避）
   const deepgramKeyRef = useRef(deepgramKey);
@@ -353,7 +355,7 @@ export function useDaimokuRecognition(
       });
 
       resetLocalPulseState();
-      localNoiseFloorDbRef.current = -60;
+      localNoiseFloorDbRef.current = -50;
 
       const recording = new Audio.Recording();
       await recording.prepareToRecordAsync({
@@ -370,8 +372,8 @@ export function useDaimokuRecognition(
         const db = status.metering;
         const thresholdDb = getLocalThresholdDb();
 
-        // 音量がしきい値を超えていない間は騒音床への追従を速める
-        const noiseAlpha = db < thresholdDb ? 0.06 : 0.015;
+        // 適応ノイズフロア: 非音声時は速く追従、音声時は遅く追従
+        const noiseAlpha = db < thresholdDb ? 0.05 : 0.01;
         localNoiseFloorDbRef.current =
           localNoiseFloorDbRef.current * (1 - noiseAlpha) + db * noiseAlpha;
 
@@ -444,6 +446,7 @@ export function useDaimokuRecognition(
     try {
       recording.setOnRecordingStatusUpdate(null);
       await recording.stopAndUnloadAsync();
+      lastRecordingUriRef.current = recording.getURI() ?? null;
     } catch {
       // ignore
     } finally {
@@ -493,6 +496,7 @@ export function useDaimokuRecognition(
 
     counter.current.reset();
     cloudCountRef.current = 0;
+    lastRecordingUriRef.current = null;
     setCount(0);
     setError(null);
     setLastTranscript("");
@@ -546,6 +550,7 @@ export function useDaimokuRecognition(
     stop();
     counter.current.reset();
     cloudCountRef.current = 0;
+    lastRecordingUriRef.current = null;
     setCount(0);
     setElapsedSeconds(0);
     setLastTranscript("");
@@ -555,6 +560,8 @@ export function useDaimokuRecognition(
   const increment = useCallback(() => {
     setCount((prev) => prev + 1);
   }, []);
+
+  const getLastRecordingUri = useCallback(() => lastRecordingUriRef.current, []);
 
   return {
     count,
@@ -570,5 +577,6 @@ export function useDaimokuRecognition(
     mode,
     lastTranscript,
     cloudRecorderEngine,
+    getLastRecordingUri,
   };
 }

@@ -6,6 +6,7 @@ import { GoalSetting } from "@/src/components/settings/GoalSetting";
 import { ApiKeySettings } from "@/src/components/settings/ApiKeySettings";
 import { FeedbackForm } from "@/src/components/settings/FeedbackForm";
 import { RecognitionModeSetting } from "@/src/components/settings/RecognitionModeSetting";
+import { AudioContributionSetting } from "@/src/components/settings/AudioContributionSetting";
 import { useGoal } from "@/src/hooks/useGoal";
 import { useApiKeys } from "@/src/hooks/useApiKeys";
 import { useTheme } from "@/src/contexts/ThemeContext";
@@ -21,6 +22,8 @@ export default function SettingsScreen() {
     saveDeepgramKey,
     saveOpenaiKey,
     saveRecognitionMode,
+    audioContributionEnabled,
+    saveAudioContribution,
   } =
     useApiKeys();
   const cloudConfigured = Boolean(deepgramKey?.trim() || openaiKey?.trim());
@@ -82,6 +85,11 @@ export default function SettingsScreen() {
           mode={recognitionMode}
           cloudConfigured={cloudConfigured}
           onChange={saveRecognitionMode}
+        />
+
+        <AudioContributionSetting
+          enabled={audioContributionEnabled}
+          onChange={saveAudioContribution}
         />
 
         <ApiKeySettings

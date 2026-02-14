@@ -10,6 +10,7 @@ import { SessionTimer } from "@/src/components/counter/SessionTimer";
 import { GoalProgressRing } from "@/src/components/counter/GoalProgressRing";
 import { RecognitionStatus } from "@/src/components/counter/RecognitionStatus";
 import { useDaimokuRecognition } from "@/src/hooks/useDaimokuRecognition";
+import { uploadAudioContribution } from "@/src/lib/audioContributionUploader";
 import { useSessionManager } from "@/src/hooks/useSessionManager";
 import { useGoal } from "@/src/hooks/useGoal";
 import { useStats } from "@/src/hooks/useStats";
@@ -21,7 +22,7 @@ export default function CounterScreen() {
   useKeepAwake();
   const { colors } = useTheme();
 
-  const { deepgramKey, openaiKey, getDeepgramToken, recognitionMode } = useApiKeys();
+  const { deepgramKey, openaiKey, getDeepgramToken, recognitionMode, audioContributionEnabled } = useApiKeys();
 
   const {
     count,
@@ -35,6 +36,7 @@ export default function CounterScreen() {
     mode,
     lastTranscript,
     cloudRecorderEngine,
+    getLastRecordingUri,
   } = useDaimokuRecognition(
     deepgramKey,
     openaiKey,
@@ -52,12 +54,22 @@ export default function CounterScreen() {
 
   const handleStop = useCallback(async () => {
     await stop();
+    const recordingUri = getLastRecordingUri();
     if (count > 0) {
       await saveSession(count, elapsedSeconds);
       await fetchTodayTotal();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      if (audioContributionEnabled && recordingUri && mode === "local") {
+        uploadAudioContribution({
+          uri: recordingUri,
+          durationSeconds: elapsedSeconds,
+          daimokuCount: count,
+          recognitionMode: mode,
+        });
+      }
     }
-  }, [stop, count, elapsedSeconds, saveSession, fetchTodayTotal]);
+  }, [stop, count, elapsedSeconds, saveSession, fetchTodayTotal, audioContributionEnabled, getLastRecordingUri, mode]);
 
   const handleStart = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

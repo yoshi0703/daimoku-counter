@@ -28,6 +28,7 @@ const KEYS = {
   deepgram: "daimoku_deepgram_key",
   openai: "daimoku_openai_key",
   recognitionMode: "daimoku_recognition_mode",
+  audioContribution: "daimoku_audio_contribution",
 };
 
 export type RecognitionModePreference = "local" | "cloud";
@@ -89,6 +90,8 @@ interface ApiKeysContextValue {
   saveOpenaiKey: (key: string) => Promise<void>;
   saveRecognitionMode: (mode: RecognitionModePreference) => Promise<void>;
   getDeepgramToken: () => Promise<string | null>;
+  audioContributionEnabled: boolean;
+  saveAudioContribution: (enabled: boolean) => Promise<void>;
 }
 
 const ApiKeysContext = createContext<ApiKeysContextValue | null>(null);
@@ -98,20 +101,23 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
   const [openaiKey, setOpenaiKey] = useState<string | null>(null);
   const [recognitionMode, setRecognitionMode] =
     useState<RecognitionModePreference>("cloud");
+  const [audioContributionEnabled, setAudioContributionEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const tokenCacheRef = useRef<TokenCache | null>(null);
 
   useEffect(() => {
     (async () => {
-      const [dg, oa, rm] = await Promise.all([
+      const [dg, oa, rm, ac] = await Promise.all([
         storageGet(KEYS.deepgram),
         storageGet(KEYS.openai),
         storageGet(KEYS.recognitionMode),
+        storageGet(KEYS.audioContribution),
       ]);
       setDeepgramKey(dg);
       setOpenaiKey(oa);
       setRecognitionMode(rm === "local" ? "local" : "cloud");
+      setAudioContributionEnabled(ac === "true");
       setLoading(false);
     })();
   }, []);
@@ -146,6 +152,11 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  const saveAudioContribution = useCallback(async (enabled: boolean) => {
+    await storageSet(KEYS.audioContribution, enabled ? "true" : "false");
+    setAudioContributionEnabled(enabled);
+  }, []);
 
   const getDeepgramToken = useCallback(async (): Promise<string | null> => {
     const cache = tokenCacheRef.current;
@@ -194,6 +205,8 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
     saveOpenaiKey,
     saveRecognitionMode,
     getDeepgramToken,
+    audioContributionEnabled,
+    saveAudioContribution,
   };
 
   return React.createElement(ApiKeysContext.Provider, { value }, children);
