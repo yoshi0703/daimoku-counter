@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet } from "react-native";
+import { useMemo } from "react";
 import Svg, { Circle } from "react-native-svg";
-import { COLORS, FONT_SIZE, SPACING } from "@/src/constants/theme";
+import { useTheme } from "@/src/contexts/ThemeContext";
+import { FONT_SIZE, SPACING } from "@/src/constants/theme";
 
 interface Props {
   current: number;
@@ -13,10 +15,41 @@ const RADIUS = (SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function GoalProgressRing({ current, target }: Props) {
+  const { colors } = useTheme();
   const progress = Math.min(current / Math.max(target, 1), 1);
   const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
   const isComplete = current >= target;
-  const progressColor = isComplete ? COLORS.green : COLORS.text;
+  const progressColor = isComplete ? colors.green : colors.text;
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          alignItems: "center",
+          justifyContent: "center",
+        },
+        svg: {
+          position: "absolute",
+        },
+        labelContainer: {
+          alignItems: "center",
+          justifyContent: "center",
+          width: SIZE,
+          height: SIZE,
+        },
+        percentage: {
+          fontSize: FONT_SIZE.lg,
+          fontWeight: "600",
+          color: colors.text,
+        },
+        targetLabel: {
+          fontSize: FONT_SIZE.xs,
+          color: colors.textTertiary,
+          marginTop: SPACING.xs,
+        },
+      }),
+    [colors],
+  );
 
   return (
     <View style={styles.container}>
@@ -25,7 +58,7 @@ export function GoalProgressRing({ current, target }: Props) {
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={RADIUS}
-          stroke={COLORS.border}
+          stroke={colors.border}
           strokeWidth={STROKE_WIDTH}
           fill="none"
         />
@@ -53,29 +86,3 @@ export function GoalProgressRing({ current, target }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  svg: {
-    position: "absolute",
-  },
-  labelContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: SIZE,
-    height: SIZE,
-  },
-  percentage: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  targetLabel: {
-    fontSize: FONT_SIZE.xs,
-    color: COLORS.textTertiary,
-    marginTop: SPACING.xs,
-  },
-});

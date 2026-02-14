@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from "react-native";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import { useKeepAwake } from "expo-keep-awake";
 import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,12 +14,14 @@ import { useSessionManager } from "@/src/hooks/useSessionManager";
 import { useGoal } from "@/src/hooks/useGoal";
 import { useStats } from "@/src/hooks/useStats";
 import { useApiKeys } from "@/src/hooks/useApiKeys";
-import { COLORS, SPACING, FONT_SIZE } from "@/src/constants/theme";
+import { useTheme } from "@/src/contexts/ThemeContext";
+import { SPACING, FONT_SIZE } from "@/src/constants/theme";
 
 export default function CounterScreen() {
   useKeepAwake();
+  const { colors } = useTheme();
 
-  const { deepgramKey, openaiKey, getDeepgramToken } = useApiKeys();
+  const { deepgramKey, openaiKey, getDeepgramToken, recognitionMode } = useApiKeys();
 
   const {
     count,
@@ -32,7 +34,13 @@ export default function CounterScreen() {
     error,
     mode,
     lastTranscript,
-  } = useDaimokuRecognition(deepgramKey, openaiKey, getDeepgramToken);
+    cloudRecorderEngine,
+  } = useDaimokuRecognition(
+    deepgramKey,
+    openaiKey,
+    getDeepgramToken,
+    recognitionMode,
+  );
 
   const { saveSession } = useSessionManager();
   const { goal } = useGoal();
@@ -63,7 +71,55 @@ export default function CounterScreen() {
 
   const displayTotal = todayTotal + (isSessionActive ? count : 0);
   const dailyTarget = goal?.daily_target ?? 100;
-  const usesSpeech = mode === "native" || mode === "cloud";
+  const usesSpeech = mode === "native" || mode === "cloud" || mode === "local";
+  const showDebugTranscript = __DEV__;
+  const modeLabel = mode === "cloud"
+    ? `${mode} (${cloudRecorderEngine})`
+    : mode;
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        content: {
+          flex: 1,
+          justifyContent: "space-between",
+          paddingHorizontal: SPACING.lg,
+          paddingBottom: SPACING.xl,
+        },
+        topSection: {
+          alignItems: "center",
+          paddingTop: SPACING.xl,
+        },
+        centerSection: {
+          alignItems: "center",
+          gap: SPACING.sm,
+        },
+        bottomSection: {
+          paddingBottom: SPACING.md,
+        },
+        transcriptBox: {
+          backgroundColor: colors.surface,
+          borderRadius: 8,
+          padding: SPACING.sm,
+          marginTop: SPACING.sm,
+          width: "100%",
+        },
+        transcriptLabel: {
+          fontSize: 11,
+          color: colors.textTertiary,
+          marginBottom: 2,
+        },
+        transcriptText: {
+          fontSize: FONT_SIZE.sm,
+          color: colors.textSecondary,
+        },
+      }),
+    [colors],
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -78,10 +134,10 @@ export default function CounterScreen() {
             <SessionTimer elapsedSeconds={elapsedSeconds} />
           )}
           <RecognitionStatus isListening={isListening} error={error} />
-          {isSessionActive && lastTranscript ? (
+          {showDebugTranscript && isSessionActive && lastTranscript ? (
             <View style={styles.transcriptBox}>
               <Text style={styles.transcriptLabel}>
-                モード: {mode} | 認識結果:
+                モード: {modeLabel} | 認識結果:
               </Text>
               <Text style={styles.transcriptText} numberOfLines={3}>
                 {lastTranscript}
@@ -103,43 +159,3 @@ export default function CounterScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "space-between",
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xl,
-  },
-  topSection: {
-    alignItems: "center",
-    paddingTop: SPACING.xl,
-  },
-  centerSection: {
-    alignItems: "center",
-    gap: SPACING.sm,
-  },
-  bottomSection: {
-    paddingBottom: SPACING.md,
-  },
-  transcriptBox: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 8,
-    padding: SPACING.sm,
-    marginTop: SPACING.sm,
-    width: "100%",
-  },
-  transcriptLabel: {
-    fontSize: 11,
-    color: COLORS.textTertiary,
-    marginBottom: 2,
-  },
-  transcriptText: {
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.textSecondary,
-  },
-});

@@ -1,4 +1,5 @@
 import {
+  default as React,
   useState,
   useEffect,
   useCallback,
@@ -8,7 +9,6 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React from "react";
 
 // SecureStore をランタイムで安全にインポート（Expo Go で失敗する場合あり）
 let SecureStore: {
@@ -18,6 +18,7 @@ let SecureStore: {
 } | null = null;
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   SecureStore = require("expo-secure-store");
 } catch {
   // fallback to AsyncStorage
@@ -26,7 +27,10 @@ try {
 const KEYS = {
   deepgram: "daimoku_deepgram_key",
   openai: "daimoku_openai_key",
+  recognitionMode: "daimoku_recognition_mode",
 };
+
+export type RecognitionModePreference = "local" | "cloud";
 
 const SUPABASE_URL = "https://yydkvjaytggaqbhcookk.supabase.co";
 const SUPABASE_ANON_KEY =
@@ -78,10 +82,12 @@ interface TokenCache {
 interface ApiKeysContextValue {
   deepgramKey: string | null;
   openaiKey: string | null;
+  recognitionMode: RecognitionModePreference;
   loading: boolean;
   hasAnyKey: boolean;
   saveDeepgramKey: (key: string) => Promise<void>;
   saveOpenaiKey: (key: string) => Promise<void>;
+  saveRecognitionMode: (mode: RecognitionModePreference) => Promise<void>;
   getDeepgramToken: () => Promise<string | null>;
 }
 
@@ -90,18 +96,22 @@ const ApiKeysContext = createContext<ApiKeysContextValue | null>(null);
 export function ApiKeysProvider({ children }: { children: ReactNode }) {
   const [deepgramKey, setDeepgramKey] = useState<string | null>(null);
   const [openaiKey, setOpenaiKey] = useState<string | null>(null);
+  const [recognitionMode, setRecognitionMode] =
+    useState<RecognitionModePreference>("cloud");
   const [loading, setLoading] = useState(true);
 
   const tokenCacheRef = useRef<TokenCache | null>(null);
 
   useEffect(() => {
     (async () => {
-      const [dg, oa] = await Promise.all([
+      const [dg, oa, rm] = await Promise.all([
         storageGet(KEYS.deepgram),
         storageGet(KEYS.openai),
+        storageGet(KEYS.recognitionMode),
       ]);
       setDeepgramKey(dg);
       setOpenaiKey(oa);
+      setRecognitionMode(rm === "local" ? "local" : "cloud");
       setLoading(false);
     })();
   }, []);
@@ -128,6 +138,14 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
       setOpenaiKey(null);
     }
   }, []);
+
+  const saveRecognitionMode = useCallback(
+    async (mode: RecognitionModePreference) => {
+      await storageSet(KEYS.recognitionMode, mode);
+      setRecognitionMode(mode);
+    },
+    [],
+  );
 
   const getDeepgramToken = useCallback(async (): Promise<string | null> => {
     const cache = tokenCacheRef.current;
@@ -164,15 +182,17 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const hasAnyKey = deepgramKey != null || openaiKey != null;
+  const hasAnyKey = Boolean(deepgramKey?.trim() || openaiKey?.trim());
 
   const value: ApiKeysContextValue = {
     deepgramKey,
     openaiKey,
+    recognitionMode,
     loading,
     hasAnyKey,
     saveDeepgramKey,
     saveOpenaiKey,
+    saveRecognitionMode,
     getDeepgramToken,
   };
 

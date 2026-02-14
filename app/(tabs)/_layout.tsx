@@ -2,17 +2,19 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 import { HapticTab } from "@/components/haptic-tab";
-import { COLORS } from "@/src/constants/theme";
+import { useTheme } from "@/src/contexts/ThemeContext";
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: COLORS.text,
-        tabBarInactiveTintColor: COLORS.textTertiary,
+        tabBarActiveTintColor: colors.text,
+        tabBarInactiveTintColor: colors.textTertiary,
         tabBarStyle: {
-          backgroundColor: COLORS.background,
-          borderTopColor: COLORS.border,
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
         },
         headerShown: false,
         tabBarButton: HapticTab,

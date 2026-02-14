@@ -1,12 +1,13 @@
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
-import { useState, useEffect } from "react";
-import { COLORS, FONT_SIZE, SPACING, TOUCH_TARGET } from "@/src/constants/theme";
+import { useState, useEffect, useMemo } from "react";
+import { useTheme } from "@/src/contexts/ThemeContext";
+import { FONT_SIZE, SPACING, TOUCH_TARGET } from "@/src/constants/theme";
 
 interface Props {
   deepgramKey: string | null;
   openaiKey: string | null;
-  onSaveDeepgram: (key: string) => void;
-  onSaveOpenai: (key: string) => void;
+  onSaveDeepgram: (key: string) => Promise<void>;
+  onSaveOpenai: (key: string) => Promise<void>;
 }
 
 export function ApiKeySettings({
@@ -15,28 +16,114 @@ export function ApiKeySettings({
   onSaveDeepgram,
   onSaveOpenai,
 }: Props) {
+  const { colors, isDark } = useTheme();
   const [dgInput, setDgInput] = useState(deepgramKey ?? "");
   const [oaInput, setOaInput] = useState(openaiKey ?? "");
-  const [saved, setSaved] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  // props（Context）からの値が変わったら入力欄を同期
   useEffect(() => {
-    if (deepgramKey != null) setDgInput(deepgramKey);
+    setDgInput(deepgramKey ?? "");
   }, [deepgramKey]);
 
   useEffect(() => {
-    if (openaiKey != null) setOaInput(openaiKey);
+    setOaInput(openaiKey ?? "");
   }, [openaiKey]);
 
-  const handleSave = () => {
-    onSaveDeepgram(dgInput);
-    onSaveOpenai(oaInput);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    setSaveState("saving");
+    try {
+      await Promise.all([
+        onSaveDeepgram(dgInput),
+        onSaveOpenai(oaInput),
+      ]);
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 2000);
+    } catch {
+      setSaveState("error");
+    }
   };
 
   const dgStatus = deepgramKey ? `設定済み (${deepgramKey.slice(0, 6)}...)` : "未設定";
   const oaStatus = openaiKey ? `設定済み (${openaiKey.slice(0, 6)}...)` : "未設定";
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: colors.surface,
+          borderRadius: 12,
+          padding: SPACING.md,
+        },
+        title: {
+          fontSize: FONT_SIZE.lg,
+          fontWeight: "600",
+          color: colors.text,
+        },
+        description: {
+          fontSize: FONT_SIZE.sm,
+          color: colors.textSecondary,
+          marginTop: SPACING.xs,
+          marginBottom: SPACING.md,
+          lineHeight: 20,
+        },
+        field: {
+          marginBottom: SPACING.md,
+        },
+        label: {
+          fontSize: FONT_SIZE.sm,
+          fontWeight: "500",
+          color: colors.text,
+          marginBottom: SPACING.xs,
+        },
+        input: {
+          height: TOUCH_TARGET.minimum,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 8,
+          paddingHorizontal: SPACING.md,
+          fontSize: FONT_SIZE.sm,
+          color: colors.text,
+          backgroundColor: colors.background,
+        },
+        hint: {
+          fontSize: 11,
+          color: colors.textTertiary,
+          marginTop: SPACING.xs,
+        },
+        saveButton: {
+          height: TOUCH_TARGET.minimum,
+          backgroundColor: colors.text,
+          borderRadius: 8,
+          justifyContent: "center",
+          alignItems: "center",
+        },
+        pressed: {
+          opacity: 0.8,
+        },
+        disabled: {
+          opacity: 0.6,
+        },
+        saveText: {
+          color: colors.background,
+          fontSize: FONT_SIZE.md,
+          fontWeight: "600",
+        },
+        statusRow: {
+          marginBottom: SPACING.md,
+          gap: 4,
+        },
+        statusText: {
+          fontSize: 12,
+        },
+        statusOk: {
+          color: colors.green,
+        },
+        statusNg: {
+          color: colors.textTertiary,
+        },
+      }),
+    [colors],
+  );
 
   return (
     <View style={styles.container}>
@@ -60,11 +147,12 @@ export function ApiKeySettings({
           style={styles.input}
           value={dgInput}
           onChangeText={setDgInput}
-          placeholder="dg_..."
-          placeholderTextColor={COLORS.textTertiary}
+          placeholder="Deepgram APIキーを入力"
+          placeholderTextColor={colors.textTertiary}
           autoCapitalize="none"
           autoCorrect={false}
           secureTextEntry
+          keyboardAppearance={isDark ? "dark" : "light"}
         />
         <Text style={styles.hint}>
           deepgram.com で無料登録 → $200クレジット付き
@@ -77,11 +165,12 @@ export function ApiKeySettings({
           style={styles.input}
           value={oaInput}
           onChangeText={setOaInput}
-          placeholder="sk-..."
-          placeholderTextColor={COLORS.textTertiary}
+          placeholder="OpenAI APIキーを入力"
+          placeholderTextColor={colors.textTertiary}
           autoCapitalize="none"
           autoCorrect={false}
           secureTextEntry
+          keyboardAppearance={isDark ? "dark" : "light"}
         />
         <Text style={styles.hint}>
           platform.openai.com でAPIキーを取得
@@ -92,85 +181,21 @@ export function ApiKeySettings({
         style={({ pressed }) => [
           styles.saveButton,
           pressed && styles.pressed,
+          saveState === "saving" && styles.disabled,
         ]}
         onPress={handleSave}
+        disabled={saveState === "saving"}
       >
         <Text style={styles.saveText}>
-          {saved ? "保存しました" : "保存"}
+          {saveState === "saving"
+            ? "保存中..."
+            : saveState === "saved"
+              ? "保存しました"
+              : saveState === "error"
+                ? "保存に失敗しました"
+                : "保存"}
         </Text>
       </Pressable>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: SPACING.md,
-  },
-  title: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  description: {
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-    marginBottom: SPACING.md,
-    lineHeight: 20,
-  },
-  field: {
-    marginBottom: SPACING.md,
-  },
-  label: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: "500",
-    color: COLORS.text,
-    marginBottom: SPACING.xs,
-  },
-  input: {
-    height: TOUCH_TARGET.minimum,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: SPACING.md,
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.text,
-    backgroundColor: COLORS.background,
-  },
-  hint: {
-    fontSize: 11,
-    color: COLORS.textTertiary,
-    marginTop: SPACING.xs,
-  },
-  saveButton: {
-    height: TOUCH_TARGET.minimum,
-    backgroundColor: COLORS.text,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  pressed: {
-    opacity: 0.8,
-  },
-  saveText: {
-    color: COLORS.background,
-    fontSize: FONT_SIZE.md,
-    fontWeight: "600",
-  },
-  statusRow: {
-    marginBottom: SPACING.md,
-    gap: 4,
-  },
-  statusText: {
-    fontSize: 12,
-  },
-  statusOk: {
-    color: COLORS.green,
-  },
-  statusNg: {
-    color: COLORS.textTertiary,
-  },
-});

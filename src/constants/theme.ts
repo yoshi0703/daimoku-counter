@@ -1,4 +1,4 @@
-export const COLORS = {
+export const LIGHT_COLORS = {
   background: "#FFFFFF",
   surface: "#F9FAFB",
   text: "#000000",
@@ -14,6 +14,27 @@ export const COLORS = {
   purple: "#8956EE",
   pink: "#ED71AB",
 } as const;
+
+export type Colors = { [K in keyof typeof LIGHT_COLORS]: string };
+
+export const DARK_COLORS: Colors = {
+  background: "#000000",
+  surface: "#1C1C1E",
+  text: "#FFFFFF",
+  textSecondary: "#98989D",
+  textTertiary: "#636366",
+  border: "#38383A",
+  red: "#E75248",
+  orange: "#E97239",
+  yellow: "#F6C443",
+  green: "#53B559",
+  blue: "#3985F7",
+  purple: "#8956EE",
+  pink: "#ED71AB",
+} as const;
+
+/** 後方互換: 静的にライトカラーを参照する既存コードのため */
+export const COLORS = LIGHT_COLORS;
 
 export const SPACING = {
   xs: 4,

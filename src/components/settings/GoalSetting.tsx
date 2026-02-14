@@ -1,6 +1,7 @@
 import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
-import { useState } from "react";
-import { COLORS, FONT_SIZE, SPACING, TOUCH_TARGET } from "@/src/constants/theme";
+import { useMemo, useState } from "react";
+import { useTheme } from "@/src/contexts/ThemeContext";
+import { FONT_SIZE, SPACING, TOUCH_TARGET } from "@/src/constants/theme";
 
 interface Props {
   currentTarget: number;
@@ -10,6 +11,7 @@ interface Props {
 const PRESETS = [100, 300, 500, 1000, 3000];
 
 export function GoalSetting({ currentTarget, onUpdate }: Props) {
+  const { colors, isDark } = useTheme();
   const [customValue, setCustomValue] = useState("");
   const [showCustom, setShowCustom] = useState(false);
 
@@ -26,6 +28,81 @@ export function GoalSetting({ currentTarget, onUpdate }: Props) {
       setShowCustom(false);
     }
   };
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: colors.surface,
+          borderRadius: 12,
+          padding: SPACING.md,
+        },
+        title: {
+          fontSize: FONT_SIZE.lg,
+          fontWeight: "600",
+          color: colors.text,
+        },
+        current: {
+          fontSize: FONT_SIZE.sm,
+          color: colors.textSecondary,
+          marginTop: SPACING.xs,
+          marginBottom: SPACING.md,
+        },
+        presets: {
+          flexDirection: "row",
+          flexWrap: "wrap",
+          gap: SPACING.sm,
+        },
+        preset: {
+          paddingHorizontal: SPACING.md,
+          paddingVertical: SPACING.sm,
+          borderRadius: 20,
+          borderWidth: 1,
+          borderColor: colors.border,
+          minHeight: TOUCH_TARGET.minimum,
+          justifyContent: "center",
+        },
+        presetActive: {
+          backgroundColor: colors.text,
+          borderColor: colors.text,
+        },
+        presetText: {
+          fontSize: FONT_SIZE.sm,
+          color: colors.text,
+        },
+        presetTextActive: {
+          color: colors.background,
+        },
+        customRow: {
+          flexDirection: "row",
+          gap: SPACING.sm,
+          marginTop: SPACING.md,
+        },
+        input: {
+          flex: 1,
+          height: TOUCH_TARGET.minimum,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 8,
+          paddingHorizontal: SPACING.md,
+          fontSize: FONT_SIZE.md,
+          color: colors.text,
+        },
+        submitButton: {
+          height: TOUCH_TARGET.minimum,
+          paddingHorizontal: SPACING.lg,
+          backgroundColor: colors.text,
+          borderRadius: 8,
+          justifyContent: "center",
+        },
+        submitText: {
+          color: colors.background,
+          fontSize: FONT_SIZE.md,
+          fontWeight: "600",
+        },
+      }),
+    [colors],
+  );
 
   return (
     <View style={styles.container}>
@@ -76,8 +153,9 @@ export function GoalSetting({ currentTarget, onUpdate }: Props) {
             value={customValue}
             onChangeText={setCustomValue}
             placeholder="目標数を入力"
-            placeholderTextColor={COLORS.textTertiary}
+            placeholderTextColor={colors.textTertiary}
             keyboardType="number-pad"
+            keyboardAppearance={isDark ? "dark" : "light"}
             returnKeyType="done"
             onSubmitEditing={handleCustomSubmit}
           />
@@ -89,74 +167,3 @@ export function GoalSetting({ currentTarget, onUpdate }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: SPACING.md,
-  },
-  title: {
-    fontSize: FONT_SIZE.lg,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  current: {
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-    marginBottom: SPACING.md,
-  },
-  presets: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACING.sm,
-  },
-  preset: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    minHeight: TOUCH_TARGET.minimum,
-    justifyContent: "center",
-  },
-  presetActive: {
-    backgroundColor: COLORS.text,
-    borderColor: COLORS.text,
-  },
-  presetText: {
-    fontSize: FONT_SIZE.sm,
-    color: COLORS.text,
-  },
-  presetTextActive: {
-    color: COLORS.background,
-  },
-  customRow: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-    marginTop: SPACING.md,
-  },
-  input: {
-    flex: 1,
-    height: TOUCH_TARGET.minimum,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: SPACING.md,
-    fontSize: FONT_SIZE.md,
-    color: COLORS.text,
-  },
-  submitButton: {
-    height: TOUCH_TARGET.minimum,
-    paddingHorizontal: SPACING.lg,
-    backgroundColor: COLORS.text,
-    borderRadius: 8,
-    justifyContent: "center",
-  },
-  submitText: {
-    color: COLORS.background,
-    fontSize: FONT_SIZE.md,
-    fontWeight: "600",
-  },
-});

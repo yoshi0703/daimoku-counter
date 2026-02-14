@@ -1,5 +1,5 @@
-import { View, ScrollView, StyleSheet, RefreshControl } from "react-native";
-import { useCallback, useState } from "react";
+import { ScrollView, StyleSheet, RefreshControl } from "react-native";
+import { useCallback, useMemo, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -8,11 +8,13 @@ import { StatsSummary } from "@/src/components/history/StatsSummary";
 import { SessionList } from "@/src/components/history/SessionList";
 import { useStats } from "@/src/hooks/useStats";
 import { useSessionManager } from "@/src/hooks/useSessionManager";
-import { COLORS, SPACING } from "@/src/constants/theme";
+import { useTheme } from "@/src/contexts/ThemeContext";
+import { SPACING } from "@/src/constants/theme";
 import type { Session } from "@/src/types";
 
 export default function HistoryScreen() {
-  const { dailyRecords, loading, fetchDailyRecords } = useStats();
+  const { colors } = useTheme();
+  const { dailyRecords, fetchDailyRecords } = useStats();
   const { getSessions } = useSessionManager();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -35,6 +37,25 @@ export default function HistoryScreen() {
     setRefreshing(false);
   }, [loadData]);
 
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        scroll: {
+          flex: 1,
+        },
+        content: {
+          padding: SPACING.lg,
+          gap: SPACING.lg,
+          paddingBottom: SPACING.xxl,
+        },
+      }),
+    [colors],
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView
@@ -51,18 +72,3 @@ export default function HistoryScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    padding: SPACING.lg,
-    gap: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-});

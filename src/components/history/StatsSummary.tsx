@@ -1,5 +1,7 @@
 import { View, Text, StyleSheet } from "react-native";
-import { COLORS, FONT_SIZE, SPACING } from "@/src/constants/theme";
+import { useMemo } from "react";
+import { useTheme } from "@/src/contexts/ThemeContext";
+import { FONT_SIZE, SPACING } from "@/src/constants/theme";
 import type { DailyRecord } from "@/src/types";
 
 interface Props {
@@ -7,11 +9,12 @@ interface Props {
 }
 
 export function StatsSummary({ records }: Props) {
+  const { colors } = useTheme();
+
   const totalCount = records.reduce((sum, r) => sum + r.total_count, 0);
   const daysActive = records.length;
   const avgPerDay = daysActive > 0 ? Math.round(totalCount / daysActive) : 0;
 
-  // 連続日数を計算
   let streak = 0;
   const today = new Date();
   for (let i = 0; i < 365; i++) {
@@ -31,6 +34,34 @@ export function StatsSummary({ records }: Props) {
     { label: "日平均", value: avgPerDay.toLocaleString() },
   ];
 
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flexDirection: "row",
+          gap: SPACING.sm,
+        },
+        card: {
+          flex: 1,
+          backgroundColor: colors.surface,
+          borderRadius: 12,
+          padding: SPACING.md,
+          alignItems: "center",
+        },
+        value: {
+          fontSize: FONT_SIZE.xl,
+          fontWeight: "600",
+          color: colors.text,
+        },
+        label: {
+          fontSize: FONT_SIZE.xs,
+          color: colors.textTertiary,
+          marginTop: SPACING.xs,
+        },
+      }),
+    [colors],
+  );
+
   return (
     <View style={styles.container}>
       {stats.map((stat) => (
@@ -42,27 +73,3 @@ export function StatsSummary({ records }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-  },
-  card: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: SPACING.md,
-    alignItems: "center",
-  },
-  value: {
-    fontSize: FONT_SIZE.xl,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  label: {
-    fontSize: FONT_SIZE.xs,
-    color: COLORS.textTertiary,
-    marginTop: SPACING.xs,
-  },
-});
