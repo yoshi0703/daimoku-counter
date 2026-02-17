@@ -111,6 +111,34 @@ export default function CounterScreen() {
   const modeLabel = mode === "cloud"
     ? `${mode} (${cloudRecorderEngine})`
     : mode;
+  const liveActivityConfigRef = useRef({
+    dailyTarget,
+    mode,
+    todayTotal,
+  });
+  const liveActivitySnapshotRef = useRef({
+    count,
+    elapsedSeconds,
+    mode,
+    todayTotal,
+  });
+
+  useEffect(() => {
+    liveActivityConfigRef.current = {
+      dailyTarget,
+      mode,
+      todayTotal,
+    };
+  }, [dailyTarget, mode, todayTotal]);
+
+  useEffect(() => {
+    liveActivitySnapshotRef.current = {
+      count,
+      elapsedSeconds,
+      mode,
+      todayTotal,
+    };
+  }, [count, elapsedSeconds, mode, todayTotal]);
 
   useEffect(() => {
     if (!isSessionActive || liveActivityIdRef.current || liveActivityStartingRef.current) return;
@@ -121,20 +149,37 @@ export default function CounterScreen() {
       liveActivityStartingRef.current = true;
       try {
         const startedAt = sessionStartedAtRef.current ?? new Date().toISOString();
+        const {
+          dailyTarget: configuredDailyTarget,
+          mode: configuredMode,
+          todayTotal: configuredTodayTotal,
+        } = liveActivityConfigRef.current;
         const activityId = await startDaimokuLiveActivity({
           sessionId: `session-${Date.now()}`,
           startedAt,
-          targetCount: dailyTarget,
-          count,
-          elapsedSeconds,
-          mode,
-          todayTotal: todayTotal + count,
+          targetCount: configuredDailyTarget,
+          count: 0,
+          elapsedSeconds: 0,
+          mode: configuredMode,
+          todayTotal: configuredTodayTotal,
           updatedAt: new Date().toISOString(),
         });
 
-        if (!cancelled && activityId) {
+        if (!activityId) return;
+
+        if (!cancelled) {
           liveActivityIdRef.current = activityId;
+          return;
         }
+
+        const snapshot = liveActivitySnapshotRef.current;
+        await stopDaimokuLiveActivity(activityId, {
+          count: snapshot.count,
+          elapsedSeconds: snapshot.elapsedSeconds,
+          mode: snapshot.mode,
+          todayTotal: snapshot.todayTotal + snapshot.count,
+          updatedAt: new Date().toISOString(),
+        });
       } finally {
         liveActivityStartingRef.current = false;
       }
@@ -142,9 +187,8 @@ export default function CounterScreen() {
 
     return () => {
       cancelled = true;
-      liveActivityStartingRef.current = false;
     };
-  }, [isSessionActive, count, elapsedSeconds, mode, todayTotal, dailyTarget]);
+  }, [isSessionActive]);
 
   useEffect(() => {
     if (!isSessionActive || !liveActivityIdRef.current) return;
