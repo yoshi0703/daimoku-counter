@@ -109,6 +109,9 @@ export function useDaimokuRecognition(
     await setAudioModeAsync({
       allowsRecording: true,
       playsInSilentMode: true,
+      shouldPlayInBackground: true,
+      allowsBackgroundRecording: true,
+      interruptionMode: "mixWithOthers",
     });
 
     const rec = recorderRef.current;
@@ -120,6 +123,7 @@ export function useDaimokuRecognition(
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: true,
       playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
       playThroughEarpieceAndroid: false,
       shouldDuckAndroid: true,
     });
@@ -171,7 +175,9 @@ export function useDaimokuRecognition(
     const localAvailable = true;
     setSpeechAvailable(nativeAvailable || cloudAvailable || localAvailable);
 
-    if (preferredMode === "cloud" && cloudAvailable) {
+    if (nativeAvailable) {
+      setMode("native");
+    } else if (preferredMode === "cloud" && cloudAvailable) {
       setMode("cloud");
     } else if (localAvailable) {
       setMode("local");
@@ -190,6 +196,11 @@ export function useDaimokuRecognition(
       requiresOnDeviceRecognition: true,
       addsPunctuation: false,
       contextualStrings: ["南無妙法蓮華経", "なむみょうほうれんげきょう"],
+      iosCategory: {
+        category: "playAndRecord",
+        categoryOptions: ["defaultToSpeaker", "allowBluetooth", "mixWithOthers"],
+        mode: "measurement",
+      },
     });
   }, []);
 
@@ -350,6 +361,7 @@ export function useDaimokuRecognition(
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
         playThroughEarpieceAndroid: false,
         shouldDuckAndroid: true,
       });
