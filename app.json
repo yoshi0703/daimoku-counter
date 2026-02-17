@@ -2,6 +2,11 @@
   "expo": {
     "name": "題目カウンター",
     "slug": "daimoku-counter",
+    "extra": {
+      "eas": {
+        "projectId": "fed7666d-6b9e-4aa1-a08b-60bc365877ad"
+      }
+    },
     "description": "音声認識で唱題の回数を自動カウントするアプリです。手動カウントにも対応し、日々の唱題記録を管理できます。",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,10 +16,18 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.yoshi0703.daimoku-counter",
+      "bundleIdentifier": "com.yoshi0703.daimokucounter",
+      "entitlements": {
+        "com.apple.security.application-groups": ["group.com.yoshi0703.daimokucounter"]
+      },
       "infoPlist": {
         "NSSpeechRecognitionUsageDescription": "唱題の回数を数えるために音声認識を使用します",
-        "NSMicrophoneUsageDescription": "唱題の音声を聞くためにマイクを使用します"
+        "NSMicrophoneUsageDescription": "唱題の音声を聞くためにマイクを使用します",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "唱題記録のスクリーンショットを保存するためにフォトライブラリを使用します",
+        "UIBackgroundModes": ["audio"],
+        "NSSupportsLiveActivities": true,
+        "NSSupportsLiveActivitiesFrequentUpdates": true
       },
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
