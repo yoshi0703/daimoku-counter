@@ -122,7 +122,6 @@
 				3A1CFB27E231C1699E69657D /* Pods */,
 				C148AE75F813B1172DA1AB15 /* ExpoModulesProviders */,
 				F33CD279A0FA483EB70DF283 /* DaimokuWidgetExtension */,
-				D9A6F09D317A4D04803021CD /* DaimokuWidgetExtension */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -172,19 +171,6 @@
 				1BC252F11C5542709949AB69 /* Info.plist */,
 				9CF4708A82D84B74BB9EE6B4 /* DaimokuWidgetExtension.entitlements */,
 				8A2C8E4931E94C1DB8DF67A2 /* DaimokuActivityAttributes.swift */,
-			);
-			name = DaimokuWidgetExtension;
-			sourceTree = "<group>";
-		};
-		D9A6F09D317A4D04803021CD /* DaimokuWidgetExtension */ = {
-			isa = PBXGroup;
-			children = (
-				8A2C8E4931E94C1DB8DF67A2 /* DaimokuActivityAttributes.swift */,
-				FF469F554B934433B380B5E8 /* DaimokuWidgetBundle.swift */,
-				1CDFE9CF0ABC40D99A8A0707 /* DaimokuCounterWidget.swift */,
-				3C20CDC99DF340098BBCFD92 /* DaimokuLiveActivityWidget.swift */,
-				1BC252F11C5542709949AB69 /* Info.plist */,
-				9CF4708A82D84B74BB9EE6B4 /* DaimokuWidgetExtension.entitlements */,
 			);
 			name = DaimokuWidgetExtension;
 			sourceTree = "<group>";
