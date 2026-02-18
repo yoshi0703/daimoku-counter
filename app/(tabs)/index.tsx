@@ -484,7 +484,7 @@ export default function CounterScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.content}>
         <View style={styles.topSection}>
           <GoalProgressRing current={displayTotal} target={dailyTarget} />
