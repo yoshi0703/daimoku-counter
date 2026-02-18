@@ -7,7 +7,6 @@ struct DaimokuActivityAttributes: ActivityAttributes {
     var elapsedSeconds: Int
     var mode: String
     var todayTotal: Int
-    var updatedAt: Date
   }
 
   var sessionId: String

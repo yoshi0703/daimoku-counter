@@ -366,3 +366,9 @@ entrypoint = "./functions/deepgram-token/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/deepgram-token/*.html" ]
+
+[functions.live-activity-push]
+enabled = true
+verify_jwt = true
+import_map = "./functions/live-activity-push/deno.json"
+entrypoint = "./functions/live-activity-push/index.ts"

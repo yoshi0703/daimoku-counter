@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
+import { AppState, type AppStateStatus, View, Text, StyleSheet } from "react-native";
 import { useEffect, useCallback, useMemo, useRef } from "react";
 import { useKeepAwake } from "expo-keep-awake";
 import * as Haptics from "expo-haptics";
@@ -18,11 +18,18 @@ import { useApiKeys } from "@/src/hooks/useApiKeys";
 import { useTheme } from "@/src/contexts/ThemeContext";
 import { SPACING, FONT_SIZE } from "@/src/constants/theme";
 import {
+  getDaimokuLiveActivityPushToken,
   startDaimokuLiveActivity,
   stopDaimokuLiveActivity,
   syncDaimokuWidgetSnapshot,
   updateDaimokuLiveActivity,
 } from "@/src/lib/iosLiveActivity";
+import { relayLiveActivityPush } from "@/src/lib/liveActivityPushRelay";
+
+const LIVE_ACTIVITY_UPDATE_MIN_INTERVAL_MS = 4000;
+const WIDGET_SYNC_MIN_INTERVAL_MS = 2000;
+const PUSH_TOKEN_RETRY_MS = 1000;
+const PUSH_TOKEN_MAX_ATTEMPTS = 20;
 
 export default function CounterScreen() {
   useKeepAwake();
@@ -54,8 +61,16 @@ export default function CounterScreen() {
   const { goal } = useGoal();
   const { todayTotal, fetchTodayTotal } = useStats();
   const liveActivityIdRef = useRef<string | null>(null);
+  const liveActivityPushTokenRef = useRef<string | null>(null);
   const liveActivityStartingRef = useRef(false);
   const sessionStartedAtRef = useRef<string | null>(null);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const liveActivityLastSignatureRef = useRef<string | null>(null);
+  const liveActivityLastUpdateAtRef = useRef(0);
+  const liveActivityUpdateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const widgetLastSignatureRef = useRef<string | null>(null);
+  const widgetLastSyncAtRef = useRef(0);
+  const widgetSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetchTodayTotal();
@@ -63,17 +78,55 @@ export default function CounterScreen() {
 
   const handleStop = useCallback(async () => {
     await stop();
+    if (liveActivityUpdateTimerRef.current) {
+      clearTimeout(liveActivityUpdateTimerRef.current);
+      liveActivityUpdateTimerRef.current = null;
+    }
+    if (widgetSyncTimerRef.current) {
+      clearTimeout(widgetSyncTimerRef.current);
+      widgetSyncTimerRef.current = null;
+    }
+
     const liveActivityId = liveActivityIdRef.current;
+    const liveActivityPushToken = liveActivityPushTokenRef.current;
+    if (liveActivityPushToken) {
+      await relayLiveActivityPush({
+        pushToken: liveActivityPushToken,
+        event: "end",
+        contentState: {
+          count,
+          elapsedSeconds,
+          mode,
+          todayTotal: todayTotal + count,
+        },
+        dismissalDate: Math.floor(Date.now() / 1000),
+      });
+    }
+
     if (liveActivityId) {
       await stopDaimokuLiveActivity(liveActivityId, {
         count,
         elapsedSeconds,
         mode,
         todayTotal: todayTotal + count,
-        updatedAt: new Date().toISOString(),
       });
       liveActivityIdRef.current = null;
     }
+    liveActivityPushTokenRef.current = null;
+
+    liveActivityLastSignatureRef.current = null;
+    liveActivityLastUpdateAtRef.current = 0;
+
+    await syncDaimokuWidgetSnapshot({
+      count: 0,
+      elapsedSeconds: 0,
+      mode,
+      todayTotal: todayTotal + count,
+      isRecording: false,
+    });
+    widgetLastSignatureRef.current = `0|${mode}|${todayTotal + count}|0`;
+    widgetLastSyncAtRef.current = Date.now();
+
     sessionStartedAtRef.current = null;
 
     const recordingUri = getLastRecordingUri();
@@ -82,7 +135,11 @@ export default function CounterScreen() {
       await fetchTodayTotal();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      if (audioContributionEnabled && recordingUri && mode === "local") {
+      if (
+        audioContributionEnabled &&
+        recordingUri &&
+        (mode === "local" || mode === "whisper")
+      ) {
         uploadAudioContribution({
           uri: recordingUri,
           durationSeconds: elapsedSeconds,
@@ -91,11 +148,25 @@ export default function CounterScreen() {
         });
       }
     }
-  }, [stop, count, elapsedSeconds, mode, todayTotal, saveSession, fetchTodayTotal, audioContributionEnabled, getLastRecordingUri]);
+  }, [
+    stop,
+    count,
+    elapsedSeconds,
+    mode,
+    todayTotal,
+    saveSession,
+    fetchTodayTotal,
+    audioContributionEnabled,
+    getLastRecordingUri,
+  ]);
 
   const handleStart = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     sessionStartedAtRef.current = new Date().toISOString();
+    liveActivityPushTokenRef.current = null;
+    liveActivityLastSignatureRef.current = null;
+    liveActivityLastUpdateAtRef.current = 0;
+    widgetLastSignatureRef.current = null;
     await start();
   }, [start]);
 
@@ -106,7 +177,11 @@ export default function CounterScreen() {
 
   const displayTotal = todayTotal + (isSessionActive ? count : 0);
   const dailyTarget = goal?.daily_target ?? 100;
-  const usesSpeech = mode === "native" || mode === "cloud" || mode === "local";
+  const usesSpeech =
+    mode === "native" ||
+    mode === "cloud" ||
+    mode === "local" ||
+    mode === "whisper";
   const showDebugTranscript = __DEV__;
   const modeLabel = mode === "cloud"
     ? `${mode} (${cloudRecorderEngine})`
@@ -122,6 +197,131 @@ export default function CounterScreen() {
     mode,
     todayTotal,
   });
+
+  const clearLiveActivityUpdateTimer = useCallback(() => {
+    if (liveActivityUpdateTimerRef.current) {
+      clearTimeout(liveActivityUpdateTimerRef.current);
+      liveActivityUpdateTimerRef.current = null;
+    }
+  }, []);
+
+  const clearWidgetSyncTimer = useCallback(() => {
+    if (widgetSyncTimerRef.current) {
+      clearTimeout(widgetSyncTimerRef.current);
+      widgetSyncTimerRef.current = null;
+    }
+  }, []);
+
+  const makeLiveActivityPayload = useCallback(() => {
+    const snapshot = liveActivitySnapshotRef.current;
+    return {
+      count: snapshot.count,
+      elapsedSeconds: snapshot.elapsedSeconds,
+      mode: snapshot.mode,
+      todayTotal: snapshot.todayTotal + snapshot.count,
+    };
+  }, []);
+
+  const makeWidgetPayload = useCallback(() => {
+    const snapshot = liveActivitySnapshotRef.current;
+    const recording = isSessionActive;
+    return {
+      count: recording ? snapshot.count : 0,
+      elapsedSeconds: recording ? snapshot.elapsedSeconds : 0,
+      mode: snapshot.mode,
+      todayTotal: snapshot.todayTotal + (recording ? snapshot.count : 0),
+      isRecording: recording,
+    };
+  }, [isSessionActive]);
+
+  const flushLiveActivityUpdate = useCallback((force: boolean) => {
+    if (!isSessionActive) return;
+    const activityId = liveActivityIdRef.current;
+    if (!activityId) return;
+
+    const payload = makeLiveActivityPayload();
+    const signature = `${payload.count}|${payload.mode}|${payload.todayTotal}`;
+    if (!force && signature === liveActivityLastSignatureRef.current) {
+      return;
+    }
+
+    liveActivityLastSignatureRef.current = signature;
+    liveActivityLastUpdateAtRef.current = Date.now();
+    void updateDaimokuLiveActivity(activityId, payload);
+
+    const liveActivityPushToken = liveActivityPushTokenRef.current;
+    if (liveActivityPushToken && appStateRef.current !== "active") {
+      void relayLiveActivityPush({
+        pushToken: liveActivityPushToken,
+        event: "update",
+        contentState: {
+          count: payload.count ?? 0,
+          elapsedSeconds: payload.elapsedSeconds ?? 0,
+          mode: payload.mode ?? "manual",
+          todayTotal: payload.todayTotal ?? 0,
+        },
+        staleDate: Math.floor(Date.now() / 1000) + 120,
+      });
+    }
+  }, [isSessionActive, makeLiveActivityPayload]);
+
+  const scheduleLiveActivityUpdate = useCallback((force = false) => {
+    if (!isSessionActive || !liveActivityIdRef.current) return;
+
+    if (force) {
+      clearLiveActivityUpdateTimer();
+      flushLiveActivityUpdate(true);
+      return;
+    }
+
+    const sinceLast = Date.now() - liveActivityLastUpdateAtRef.current;
+    const waitMs = LIVE_ACTIVITY_UPDATE_MIN_INTERVAL_MS - sinceLast;
+    if (waitMs <= 0) {
+      flushLiveActivityUpdate(false);
+      return;
+    }
+
+    if (liveActivityUpdateTimerRef.current) return;
+
+    liveActivityUpdateTimerRef.current = setTimeout(() => {
+      liveActivityUpdateTimerRef.current = null;
+      flushLiveActivityUpdate(false);
+    }, waitMs);
+  }, [clearLiveActivityUpdateTimer, flushLiveActivityUpdate, isSessionActive]);
+
+  const flushWidgetSnapshotSync = useCallback((force: boolean) => {
+    const payload = makeWidgetPayload();
+    const signature = `${payload.count}|${payload.mode}|${payload.todayTotal}|${payload.isRecording ? 1 : 0}`;
+    if (!force && signature === widgetLastSignatureRef.current) {
+      return;
+    }
+
+    widgetLastSignatureRef.current = signature;
+    widgetLastSyncAtRef.current = Date.now();
+    void syncDaimokuWidgetSnapshot(payload);
+  }, [makeWidgetPayload]);
+
+  const scheduleWidgetSnapshotSync = useCallback((force = false) => {
+    if (force) {
+      clearWidgetSyncTimer();
+      flushWidgetSnapshotSync(true);
+      return;
+    }
+
+    const sinceLast = Date.now() - widgetLastSyncAtRef.current;
+    const waitMs = WIDGET_SYNC_MIN_INTERVAL_MS - sinceLast;
+    if (waitMs <= 0) {
+      flushWidgetSnapshotSync(false);
+      return;
+    }
+
+    if (widgetSyncTimerRef.current) return;
+
+    widgetSyncTimerRef.current = setTimeout(() => {
+      widgetSyncTimerRef.current = null;
+      flushWidgetSnapshotSync(false);
+    }, waitMs);
+  }, [clearWidgetSyncTimer, flushWidgetSnapshotSync]);
 
   useEffect(() => {
     liveActivityConfigRef.current = {
@@ -162,13 +362,26 @@ export default function CounterScreen() {
           elapsedSeconds: 0,
           mode: configuredMode,
           todayTotal: configuredTodayTotal,
-          updatedAt: new Date().toISOString(),
         });
 
         if (!activityId) return;
 
         if (!cancelled) {
           liveActivityIdRef.current = activityId;
+          (async () => {
+            for (let attempt = 0; attempt < PUSH_TOKEN_MAX_ATTEMPTS; attempt += 1) {
+              if (cancelled || liveActivityIdRef.current !== activityId) return;
+
+              const pushToken = await getDaimokuLiveActivityPushToken(activityId);
+              if (pushToken) {
+                liveActivityPushTokenRef.current = pushToken;
+                return;
+              }
+
+              await new Promise((resolve) => setTimeout(resolve, PUSH_TOKEN_RETRY_MS));
+            }
+          })();
+          scheduleLiveActivityUpdate(true);
           return;
         }
 
@@ -178,7 +391,6 @@ export default function CounterScreen() {
           elapsedSeconds: snapshot.elapsedSeconds,
           mode: snapshot.mode,
           todayTotal: snapshot.todayTotal + snapshot.count,
-          updatedAt: new Date().toISOString(),
         });
       } finally {
         liveActivityStartingRef.current = false;
@@ -188,30 +400,44 @@ export default function CounterScreen() {
     return () => {
       cancelled = true;
     };
-  }, [isSessionActive]);
+  }, [isSessionActive, scheduleLiveActivityUpdate]);
 
   useEffect(() => {
     if (!isSessionActive || !liveActivityIdRef.current) return;
-
-    updateDaimokuLiveActivity(liveActivityIdRef.current, {
-      count,
-      elapsedSeconds,
-      mode,
-      todayTotal: todayTotal + count,
-      updatedAt: new Date().toISOString(),
-    });
-  }, [isSessionActive, count, elapsedSeconds, mode, todayTotal]);
+    scheduleLiveActivityUpdate(false);
+  }, [isSessionActive, count, mode, todayTotal, scheduleLiveActivityUpdate]);
 
   useEffect(() => {
-    syncDaimokuWidgetSnapshot({
-      count: isSessionActive ? count : 0,
-      elapsedSeconds: isSessionActive ? elapsedSeconds : 0,
-      mode,
-      todayTotal: displayTotal,
-      isRecording: isSessionActive,
-      updatedAt: new Date().toISOString(),
+    scheduleWidgetSnapshotSync(false);
+  }, [isSessionActive, count, mode, todayTotal, scheduleWidgetSnapshotSync]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      const prevState = appStateRef.current;
+      appStateRef.current = nextState;
+      if (!isSessionActive) return;
+
+      const movedToBackground = nextState === "inactive" || nextState === "background";
+      const returnedToForeground =
+        (prevState === "inactive" || prevState === "background") && nextState === "active";
+
+      if (movedToBackground || returnedToForeground) {
+        scheduleWidgetSnapshotSync(true);
+        scheduleLiveActivityUpdate(true);
+      }
     });
-  }, [displayTotal, isSessionActive, count, elapsedSeconds, mode]);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isSessionActive, scheduleLiveActivityUpdate, scheduleWidgetSnapshotSync]);
+
+  useEffect(() => {
+    return () => {
+      clearLiveActivityUpdateTimer();
+      clearWidgetSyncTimer();
+    };
+  }, [clearLiveActivityUpdateTimer, clearWidgetSyncTimer]);
 
   const styles = useMemo(
     () =>

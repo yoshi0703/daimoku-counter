@@ -8,7 +8,6 @@ type LiveActivityPayload = {
   elapsedSeconds?: number;
   mode?: string;
   todayTotal?: number;
-  updatedAt?: string;
   isRecording?: boolean;
 };
 
@@ -18,6 +17,7 @@ type LiveActivityNativeModule = {
   update: (activityId: string, payload: LiveActivityPayload) => Promise<boolean>;
   stop: (activityId: string, payload: LiveActivityPayload) => Promise<boolean>;
   syncWidgetSnapshot: (payload: LiveActivityPayload) => Promise<boolean>;
+  getPushToken: (activityId: string) => Promise<string | null>;
 };
 
 const nativeModule = NativeModules.DaimokuLiveActivityModule as LiveActivityNativeModule | undefined;
@@ -73,5 +73,15 @@ export async function syncDaimokuWidgetSnapshot(payload: LiveActivityPayload): P
     return await nativeModule!.syncWidgetSnapshot(payload);
   } catch {
     return false;
+  }
+}
+
+export async function getDaimokuLiveActivityPushToken(activityId: string): Promise<string | null> {
+  if (!canUseModule()) return null;
+
+  try {
+    return await nativeModule!.getPushToken(activityId);
+  } catch {
+    return null;
   }
 }

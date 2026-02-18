@@ -152,7 +152,7 @@ export function GoalSetting({ currentTarget, onUpdate }: Props) {
             style={styles.input}
             value={customValue}
             onChangeText={setCustomValue}
-            placeholder="目標数を入力"
+            placeholder="100"
             placeholderTextColor={colors.textTertiary}
             keyboardType="number-pad"
             keyboardAppearance={isDark ? "dark" : "light"}
