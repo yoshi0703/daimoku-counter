@@ -244,16 +244,16 @@ export function useDaimokuRecognition(
     ExpoSpeechRecognitionModule.start({
       lang: "ja-JP",
       interimResults: true,
-      maxAlternatives: 3,
+      maxAlternatives: 5,
       continuous: true,
-      requiresOnDeviceRecognition: true,
+      requiresOnDeviceRecognition: false,
       addsPunctuation: false,
-      iosTaskHint: "confirmation",
+      iosTaskHint: "dictation",
       contextualStrings: getDaimokuContextualStrings(),
       iosCategory: {
         category: "playAndRecord",
         categoryOptions: ["defaultToSpeaker", "allowBluetooth", "mixWithOthers"],
-        mode: "measurement",
+        mode: "default",
       },
     });
   }, []);
@@ -268,7 +268,7 @@ export function useDaimokuRecognition(
       counter.current.onRecognitionRestart();
       setTimeout(() => {
         if (sessionActiveRef.current) startRecognition();
-      }, 300);
+      }, 50);
     }
   });
 
@@ -288,7 +288,7 @@ export function useDaimokuRecognition(
           counter.current.onRecognitionRestart();
           startRecognition();
         }
-      }, 1000);
+      }, 200);
     }
   });
 

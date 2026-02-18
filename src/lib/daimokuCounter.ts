@@ -10,7 +10,13 @@ export const DAIMOKU_VARIANTS = [
   "なんみょうほうれんげーきょう",
   "なむみょーほーれんげきょー",
   "なむみょーほーれんげーきょー",
-  "南無妙法蓮華経",  // 全角
+  // Apple SFSpeechRecognizer の誤認識パターン
+  "なむみょうほうれんげきょ",
+  "なもみょうほうれんげきょう",
+  "なんみょーほーれんげきょー",
+  "ナンミョーホーレンゲキョー",
+  "なみょうほうれんげきょう",
+  "なむみょうほーれんげきょう",
 ];
 
 const DAIMOKU_CONTEXTUAL_STRINGS = Array.from(
@@ -115,13 +121,15 @@ export class DaimokuCounter {
     if (isFinal) {
       const countFromThisFinal = countOccurrences(transcript);
 
-      if (
-        this.lastFinalTranscript.length > 0 &&
-        transcript.startsWith(this.lastFinalTranscript)
-      ) {
+      const overlapRatio =
+        this.lastFinalTranscript.length > 0
+          ? this.calculateOverlap(this.lastFinalTranscript, transcript)
+          : 0;
+
+      if (overlapRatio > 0.8) {
         // 累積的な final: 前回との差分のみ加算
         const previousCount = countOccurrences(this.lastFinalTranscript);
-        this.finalizedCount += countFromThisFinal - previousCount;
+        this.finalizedCount += Math.max(0, countFromThisFinal - previousCount);
       } else {
         // 新しいセグメント: 全カウント加算
         this.finalizedCount += countFromThisFinal;
@@ -135,10 +143,12 @@ export class DaimokuCounter {
     // Interim result: 暫定デルタを計算
     const totalInInterim = countOccurrences(transcript);
 
-    if (
-      this.lastFinalTranscript.length > 0 &&
-      transcript.startsWith(this.lastFinalTranscript)
-    ) {
+    const interimOverlap =
+      this.lastFinalTranscript.length > 0
+        ? this.calculateOverlap(this.lastFinalTranscript, transcript)
+        : 0;
+
+    if (interimOverlap > 0.8) {
       const alreadyCounted = countOccurrences(this.lastFinalTranscript);
       this.currentInterimDelta = Math.max(0, totalInInterim - alreadyCounted);
     } else {
@@ -162,5 +172,18 @@ export class DaimokuCounter {
     this.finalizedCount = 0;
     this.lastFinalTranscript = "";
     this.currentInterimDelta = 0;
+  }
+
+  private calculateOverlap(previous: string, current: string): number {
+    if (previous.length === 0) return 0;
+    const searchWindow = current.substring(
+      0,
+      Math.min(current.length, previous.length + 20),
+    );
+    let matchCount = 0;
+    for (let i = 0; i < previous.length; i++) {
+      if (searchWindow.includes(previous[i])) matchCount++;
+    }
+    return matchCount / previous.length;
   }
 }
