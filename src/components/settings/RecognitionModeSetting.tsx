@@ -87,7 +87,8 @@ export function RecognitionModeSetting({
     <View style={styles.container}>
       <Text style={styles.title}>認識モード</Text>
       <Text style={styles.description}>
-        Expo Goでは local（端末内推定）か cloud（API認識）を選べます。
+        local は端末内認識です（iPhone Development BuildではWhisperを使用）。
+        cloud はAPI経由の認識です。
       </Text>
 
       <View style={styles.row}>
@@ -129,6 +130,9 @@ export function RecognitionModeSetting({
           APIキー未設定のため、cloudを選んでも実行時はlocalにフォールバックします。
         </Text>
       ) : null}
+      <Text style={styles.warning}>
+        初回のlocal実行時はWhisperモデルのダウンロードが発生します（オンライン必須）。
+      </Text>
     </View>
   );
 }

@@ -10,44 +10,68 @@
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		36DF47D1B6AFC1FE56DA6673 /* libPods-app.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 602DA61437A47337164DFB0C /* libPods-app.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		4117DE736BDE45CC99E447C0 /* DaimokuActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A2C8E4931E94C1DB8DF67A2 /* DaimokuActivityAttributes.swift */; };
+		4BE2E226F654452E9A29420D /* DaimokuCounterWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CDFE9CF0ABC40D99A8A0707 /* DaimokuCounterWidget.swift */; };
+		876387E4F2164D5A9AB7B1B9 /* DaimokuWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 281989780F9743C18B9AED4A /* DaimokuWidgetExtension.appex */; };
+		87FDAA19E2414AAFAC3A3B95 /* DaimokuLiveActivityModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 5CD972F5EFC84F0B8E171415 /* DaimokuLiveActivityModule.m */; };
+		A42E26F3CBB947F08B0604BB /* DaimokuLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C20CDC99DF340098BBCFD92 /* DaimokuLiveActivityWidget.swift */; };
 		B40C3F9CCD704D3DAF03F53C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 74A9E80AA45D40E2A92AC906 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		D9ECD460C93C1B47F5A07CA7 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00BC1B3B30B1CF517C6F49A2 /* ExpoModulesProvider.swift */; };
-		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		876387E4F2164D5A9AB7B1B9 /* DaimokuWidgetExtension.appex in Copy Files */ = {isa = PBXBuildFile; fileRef = 281989780F9743C18B9AED4A /* DaimokuWidgetExtension.appex */; };
 		CA5E5CCD1EEE4626A2387D90 /* DaimokuLiveActivityModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = D141D15A19B24BA2B2B3A43F /* DaimokuLiveActivityModule.swift */; };
-		87FDAA19E2414AAFAC3A3B95 /* DaimokuLiveActivityModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 5CD972F5EFC84F0B8E171415 /* DaimokuLiveActivityModule.m */; };
-		4117DE736BDE45CC99E447C0 /* DaimokuActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A2C8E4931E94C1DB8DF67A2 /* DaimokuActivityAttributes.swift */; };
-		E19E803524BD492C81EB52D8 /* DaimokuWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF469F554B934433B380B5E8 /* DaimokuWidgetBundle.swift */; };
-		4BE2E226F654452E9A29420D /* DaimokuCounterWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CDFE9CF0ABC40D99A8A0707 /* DaimokuCounterWidget.swift */; };
-		A42E26F3CBB947F08B0604BB /* DaimokuLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C20CDC99DF340098BBCFD92 /* DaimokuLiveActivityWidget.swift */; };
 		CBF389CBE46F4951A4F4F2A2 /* DaimokuActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42B2823926B4F3885AB3191 /* DaimokuActivityAttributes.swift */; };
+		D9ECD460C93C1B47F5A07CA7 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00BC1B3B30B1CF517C6F49A2 /* ExpoModulesProvider.swift */; };
+		E19E803524BD492C81EB52D8 /* DaimokuWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF469F554B934433B380B5E8 /* DaimokuWidgetBundle.swift */; };
+		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		FFC80AD16855459281FADE7E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 357F788720DA43A0A111A44D;
+			remoteInfo = DaimokuWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B6D0795E0E074DC4A9A086C8 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				876387E4F2164D5A9AB7B1B9 /* DaimokuWidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		00BC1B3B30B1CF517C6F49A2 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-app/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = app.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = app/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = app/Info.plist; sourceTree = "<group>"; };
+		1BC252F11C5542709949AB69 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = DaimokuWidgetExtension/Info.plist; sourceTree = "<group>"; };
+		1CDFE9CF0ABC40D99A8A0707 /* DaimokuCounterWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuCounterWidget.swift; path = DaimokuWidgetExtension/DaimokuCounterWidget.swift; sourceTree = "<group>"; };
 		21F500166D1CA77BC99E063C /* Pods-app.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.release.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.release.xcconfig"; sourceTree = "<group>"; };
+		281989780F9743C18B9AED4A /* DaimokuWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = undefined; name = DaimokuWidgetExtension.appex; path = DaimokuWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3C20CDC99DF340098BBCFD92 /* DaimokuLiveActivityWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuLiveActivityWidget.swift; path = DaimokuWidgetExtension/DaimokuLiveActivityWidget.swift; sourceTree = "<group>"; };
+		5CD972F5EFC84F0B8E171415 /* DaimokuLiveActivityModule.m */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = DaimokuLiveActivityModule.m; path = app/DaimokuLiveActivityModule.m; sourceTree = "<group>"; };
 		602DA61437A47337164DFB0C /* libPods-app.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-app.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		74A9E80AA45D40E2A92AC906 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = app/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		8A2C8E4931E94C1DB8DF67A2 /* DaimokuActivityAttributes.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuActivityAttributes.swift; path = DaimokuWidgetExtension/DaimokuActivityAttributes.swift; sourceTree = "<group>"; };
+		9CF4708A82D84B74BB9EE6B4 /* DaimokuWidgetExtension.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = DaimokuWidgetExtension.entitlements; path = DaimokuWidgetExtension/DaimokuWidgetExtension.entitlements; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = app/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		C42B2823926B4F3885AB3191 /* DaimokuActivityAttributes.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuActivityAttributes.swift; path = app/DaimokuActivityAttributes.swift; sourceTree = "<group>"; };
+		D141D15A19B24BA2B2B3A43F /* DaimokuLiveActivityModule.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuLiveActivityModule.swift; path = app/DaimokuLiveActivityModule.swift; sourceTree = "<group>"; };
 		E400169A41A76383A6423F6F /* Pods-app.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.debug.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = app/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* app-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "app-Bridging-Header.h"; path = "app/app-Bridging-Header.h"; sourceTree = "<group>"; };
-		281989780F9743C18B9AED4A /* DaimokuWidgetExtension.appex */ = {isa = PBXFileReference; name = "DaimokuWidgetExtension.appex"; path = "DaimokuWidgetExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; fileEncoding = undefined; lastKnownFileType = undefined; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; };
-		C42B2823926B4F3885AB3191 /* DaimokuActivityAttributes.swift */ = {isa = PBXFileReference; name = "DaimokuActivityAttributes.swift"; path = "app/DaimokuActivityAttributes.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		D141D15A19B24BA2B2B3A43F /* DaimokuLiveActivityModule.swift */ = {isa = PBXFileReference; name = "DaimokuLiveActivityModule.swift"; path = "app/DaimokuLiveActivityModule.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		5CD972F5EFC84F0B8E171415 /* DaimokuLiveActivityModule.m */ = {isa = PBXFileReference; name = "DaimokuLiveActivityModule.m"; path = "app/DaimokuLiveActivityModule.m"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; explicitFileType = undefined; includeInIndex = 0; };
-		FF469F554B934433B380B5E8 /* DaimokuWidgetBundle.swift */ = {isa = PBXFileReference; name = "DaimokuWidgetBundle.swift"; path = "DaimokuWidgetExtension/DaimokuWidgetBundle.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		1CDFE9CF0ABC40D99A8A0707 /* DaimokuCounterWidget.swift */ = {isa = PBXFileReference; name = "DaimokuCounterWidget.swift"; path = "DaimokuWidgetExtension/DaimokuCounterWidget.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		3C20CDC99DF340098BBCFD92 /* DaimokuLiveActivityWidget.swift */ = {isa = PBXFileReference; name = "DaimokuLiveActivityWidget.swift"; path = "DaimokuWidgetExtension/DaimokuLiveActivityWidget.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
-		1BC252F11C5542709949AB69 /* Info.plist */ = {isa = PBXFileReference; name = "Info.plist"; path = "DaimokuWidgetExtension/Info.plist"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = text.plist.xml; explicitFileType = undefined; includeInIndex = 0; };
-		9CF4708A82D84B74BB9EE6B4 /* DaimokuWidgetExtension.entitlements */ = {isa = PBXFileReference; name = "DaimokuWidgetExtension.entitlements"; path = "DaimokuWidgetExtension/DaimokuWidgetExtension.entitlements"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		8A2C8E4931E94C1DB8DF67A2 /* DaimokuActivityAttributes.swift */ = {isa = PBXFileReference; name = "DaimokuActivityAttributes.swift"; path = "DaimokuWidgetExtension/DaimokuActivityAttributes.swift"; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = sourcecode.swift; explicitFileType = undefined; includeInIndex = 0; };
+		FF469F554B934433B380B5E8 /* DaimokuWidgetBundle.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuWidgetBundle.swift; path = DaimokuWidgetExtension/DaimokuWidgetBundle.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -204,11 +228,7 @@
 		};
 		357F788720DA43A0A111A44D /* DaimokuWidgetExtension */ = {
 			isa = PBXNativeTarget;
-			name = "DaimokuWidgetExtension";
-			productName = "DaimokuWidgetExtension";
-			productReference = 281989780F9743C18B9AED4A;
-			productType = "com.apple.product-type.app-extension";
-			buildConfigurationList = 0623233C6497418B9BD56DB0;
+			buildConfigurationList = 0623233C6497418B9BD56DB0 /* Build configuration list for PBXNativeTarget "DaimokuWidgetExtension" */;
 			buildPhases = (
 				B1439C2E63184FC49AE8B819 /* Sources */,
 				27150E62D5344B33A59E5F09 /* Frameworks */,
@@ -218,6 +238,10 @@
 			);
 			dependencies = (
 			);
+			name = DaimokuWidgetExtension;
+			productName = DaimokuWidgetExtension;
+			productReference = 281989780F9743C18B9AED4A /* DaimokuWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -252,6 +276,13 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		0D07B5D150014D82B3CA05FB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F8E1A680F5B00A75B9A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -260,13 +291,6 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				B40C3F9CCD704D3DAF03F53C /* PrivacyInfo.xcprivacy in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		0D07B5D150014D82B3CA05FB /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -322,12 +346,14 @@
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/whisper-rn/rnwhisper.framework/rnwhisper",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/rnwhisper.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -424,6 +450,14 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		000E423C691C483BB6F4429F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 357F788720DA43A0A111A44D /* DaimokuWidgetExtension */;
+			targetProxy = FFC80AD16855459281FADE7E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -490,6 +524,54 @@
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
+		};
+		1CF91AAC9719404EBFEDBADA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = DaimokuWidgetExtension/DaimokuWidgetExtension.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DaimokuWidgetExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.yoshi0703.daimokucounter.widget;
+				PRODUCT_NAME = DaimokuWidgetExtension;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		50DAC9AC9E7D48ABB4F3E134 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = DaimokuWidgetExtension/DaimokuWidgetExtension.entitlements;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DaimokuWidgetExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.yoshi0703.daimokucounter.widget;
+				PRODUCT_NAME = DaimokuWidgetExtension;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -609,47 +691,18 @@
 			};
 			name = Release;
 		};
-		50DAC9AC9E7D48ABB4F3E134 /* Debug */ = {
-			name = Debug;
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = "DaimokuWidgetExtension/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				PRODUCT_NAME = "DaimokuWidgetExtension";
-				SKIP_INSTALL = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.yoshi0703.daimokucounter.widget";
-				CODE_SIGN_ENTITLEMENTS = "DaimokuWidgetExtension/DaimokuWidgetExtension.entitlements";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-			};
-		};
-		1CF91AAC9719404EBFEDBADA /* Release */ = {
-			name = Release;
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = "DaimokuWidgetExtension/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				PRODUCT_NAME = "DaimokuWidgetExtension";
-				SKIP_INSTALL = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.yoshi0703.daimokucounter.widget";
-				CODE_SIGN_ENTITLEMENTS = "DaimokuWidgetExtension/DaimokuWidgetExtension.entitlements";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-			};
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		0623233C6497418B9BD56DB0 /* Build configuration list for PBXNativeTarget "DaimokuWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				50DAC9AC9E7D48ABB4F3E134 /* Debug */,
+				1CF91AAC9719404EBFEDBADA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "app" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -668,48 +721,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		0623233C6497418B9BD56DB0 /* Build configuration list for PBXNativeTarget "DaimokuWidgetExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				50DAC9AC9E7D48ABB4F3E134 /* Debug */,
-				1CF91AAC9719404EBFEDBADA /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 /* End XCConfigurationList section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		B6D0795E0E074DC4A9A086C8 /* Embed App Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				876387E4F2164D5A9AB7B1B9 /* DaimokuWidgetExtension.appex in Copy Files */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			name = "Embed App Extensions";
-			dstPath = "";
-			dstSubfolderSpec = 13;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		000E423C691C483BB6F4429F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 357F788720DA43A0A111A44D /* DaimokuWidgetExtension */;
-			targetProxy = FFC80AD16855459281FADE7E /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
-/* Begin PBXContainerItemProxy section */
-		FFC80AD16855459281FADE7E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 357F788720DA43A0A111A44D;
-			remoteInfo = "DaimokuWidgetExtension";
-		};
-/* End PBXContainerItemProxy section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }

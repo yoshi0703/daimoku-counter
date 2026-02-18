@@ -147,7 +147,7 @@ export function ApiKeySettings({
           style={styles.input}
           value={dgInput}
           onChangeText={setDgInput}
-          placeholder="Deepgram APIキーを入力"
+          placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
           placeholderTextColor={colors.textTertiary}
           autoCapitalize="none"
           autoCorrect={false}
@@ -165,7 +165,7 @@ export function ApiKeySettings({
           style={styles.input}
           value={oaInput}
           onChangeText={setOaInput}
-          placeholder="OpenAI APIキーを入力"
+          placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
           placeholderTextColor={colors.textTertiary}
           autoCapitalize="none"
           autoCorrect={false}

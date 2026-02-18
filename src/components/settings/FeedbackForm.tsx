@@ -196,7 +196,7 @@ export function FeedbackForm() {
           style={styles.input}
           value={summary}
           onChangeText={setSummary}
-          placeholder="例: カウント精度の改善"
+          placeholder="カウント精度の改善"
           placeholderTextColor={colors.textTertiary}
           keyboardAppearance={isDark ? "dark" : "light"}
         />
@@ -208,7 +208,7 @@ export function FeedbackForm() {
           style={[styles.input, styles.textArea]}
           value={details}
           onChangeText={setDetails}
-          placeholder="状況や再現手順を具体的に書いてください"
+          placeholder="どのような状況で発生しましたか？"
           placeholderTextColor={colors.textTertiary}
           multiline
           textAlignVertical="top"
@@ -225,7 +225,7 @@ export function FeedbackForm() {
           style={styles.input}
           value={contact}
           onChangeText={setContact}
-          placeholder="返信が必要な場合のみメールアドレスを入力"
+          placeholder="example@email.com"
           placeholderTextColor={colors.textTertiary}
           autoCapitalize="none"
           autoCorrect={false}

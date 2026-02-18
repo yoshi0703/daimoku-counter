@@ -8,7 +8,17 @@ import {
 import { Audio } from "expo-av";
 import type { AudioRecorder } from "expo-audio";
 import type { RecognitionModePreference } from "@/src/hooks/useApiKeys";
-import { DaimokuCounter, countOccurrences } from "@/src/lib/daimokuCounter";
+import {
+  DaimokuCounter,
+  countOccurrences,
+  getDaimokuContextualStrings,
+  selectBestDaimokuTranscript,
+} from "@/src/lib/daimokuCounter";
+import {
+  isLocalWhisperSupported,
+  transcribeWithLocalWhisper,
+  warmupLocalWhisper,
+} from "@/src/lib/localWhisper";
 import { transcribeAudio } from "@/src/lib/transcriptionService";
 
 // expo-speech-recognition をランタイムで安全にインポート
@@ -24,10 +34,24 @@ try {
   // Expo Go では利用不可
 }
 
+function isNativeOnDeviceRecognitionAvailable(): boolean {
+  if (!ExpoSpeechRecognitionModule) return false;
+
+  try {
+    if (typeof ExpoSpeechRecognitionModule.supportsOnDeviceRecognition === "function") {
+      return Boolean(ExpoSpeechRecognitionModule.supportsOnDeviceRecognition());
+    }
+  } catch {
+    // ignore and assume available
+  }
+
+  return true;
+}
+
 /** 録音チャンクの長さ（ミリ秒） */
 const CHUNK_DURATION_MS = 15000;
 type CloudRecorderEngine = "expo-audio" | "expo-av";
-type RecognitionMode = "native" | "cloud" | "local" | "manual";
+type RecognitionMode = "native" | "cloud" | "local" | "whisper" | "manual";
 
 // Expo Go 向けローカル推定モード（メータリングベース）
 // v2: 実録音(51回/60秒)で検証済みパラメータ — 高速唱題(~1.18s/cycle)対応
@@ -60,6 +84,7 @@ export function useDaimokuRecognition(
   const startTimeRef = useRef<number | null>(null);
   const chunkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cloudCountRef = useRef(0);
+  const whisperCountRef = useRef(0);
   const cloudRecorderEngineRef = useRef<CloudRecorderEngine>("expo-audio");
   const avRecordingRef = useRef<Audio.Recording | null>(null);
   const localRecordingRef = useRef<Audio.Recording | null>(null);
@@ -171,15 +196,42 @@ export function useDaimokuRecognition(
     const hasDeepgramKey = Boolean(deepgramKey?.trim());
     const hasOpenaiKey = Boolean(openaiKey?.trim());
     const cloudAvailable = hasDeepgramKey || hasOpenaiKey;
-    const nativeAvailable = ExpoSpeechRecognitionModule != null;
-    const localAvailable = true;
-    setSpeechAvailable(nativeAvailable || cloudAvailable || localAvailable);
+    const nativeAvailable = isNativeOnDeviceRecognitionAvailable();
+    const whisperAvailable = isLocalWhisperSupported();
+    const localMeteringAvailable = true;
+
+    setSpeechAvailable(
+      nativeAvailable ||
+      cloudAvailable ||
+      whisperAvailable ||
+      localMeteringAvailable,
+    );
+
+    if (preferredMode === "cloud" && cloudAvailable) {
+      setMode("cloud");
+      return;
+    }
+
+    if (preferredMode === "local") {
+      if (whisperAvailable) {
+        setMode("whisper");
+        return;
+      }
+      if (nativeAvailable) {
+        setMode("native");
+        return;
+      }
+      if (localMeteringAvailable) {
+        setMode("local");
+        return;
+      }
+    }
 
     if (nativeAvailable) {
       setMode("native");
-    } else if (preferredMode === "cloud" && cloudAvailable) {
+    } else if (cloudAvailable) {
       setMode("cloud");
-    } else if (localAvailable) {
+    } else if (localMeteringAvailable) {
       setMode("local");
     } else {
       setMode("manual");
@@ -192,10 +244,12 @@ export function useDaimokuRecognition(
     ExpoSpeechRecognitionModule.start({
       lang: "ja-JP",
       interimResults: true,
+      maxAlternatives: 3,
       continuous: true,
       requiresOnDeviceRecognition: true,
       addsPunctuation: false,
-      contextualStrings: ["南無妙法蓮華経", "なむみょうほうれんげきょう"],
+      iosTaskHint: "confirmation",
+      contextualStrings: getDaimokuContextualStrings(),
       iosCategory: {
         category: "playAndRecord",
         categoryOptions: ["defaultToSpeaker", "allowBluetooth", "mixWithOthers"],
@@ -219,7 +273,7 @@ export function useDaimokuRecognition(
   });
 
   useSpeechRecognitionEvent("result", (event: any) => {
-    const transcript = event.results[0]?.transcript ?? "";
+    const transcript = selectBestDaimokuTranscript(event.results);
     const isFinal = event.isFinal;
     const newCount = counter.current.processResult(transcript, isFinal);
     setCount(newCount);
@@ -329,6 +383,85 @@ export function useDaimokuRecognition(
     }
     setIsListening(false);
   }, [processChunk, stopCloudRecordingInternal]);
+
+  // ===== ローカルWhisper音声認識 (iPhone向け) =====
+  const processWhisperChunk = useCallback(async (uri: string) => {
+    const result = await transcribeWithLocalWhisper(uri);
+
+    if (result.success) {
+      const chunkCount = countOccurrences(result.transcript);
+      setLastTranscript(
+        result.transcript
+          ? `[whisper:${chunkCount}] ${result.transcript}`
+          : "(無音)",
+      );
+
+      if (chunkCount > 0) {
+        whisperCountRef.current += chunkCount;
+        setCount(whisperCountRef.current);
+      }
+      return;
+    }
+
+    setError(result.error ?? "Whisper文字起こしエラー");
+    setLastTranscript(`Whisperエラー: ${result.error}`);
+  }, []);
+
+  const startWhisperChunk = useCallback(async () => {
+    if (!sessionActiveRef.current) return;
+
+    try {
+      const recorderEngine = await startCloudRecording();
+      setIsListening(true);
+      setError(null);
+      setLastTranscript(`録音中... (${recorderEngine} / whisper)`);
+
+      chunkTimerRef.current = setTimeout(async () => {
+        if (!sessionActiveRef.current) return;
+
+        try {
+          const uri = await stopCloudRecordingInternal();
+
+          if (uri) {
+            setLastTranscript("Whisperで文字起こし中...");
+            await processWhisperChunk(uri);
+          } else {
+            setLastTranscript("録音データが取得できませんでした");
+          }
+        } catch (stopError: any) {
+          setError(`録音停止エラー: ${stopError?.message ?? "unknown"}`);
+          setLastTranscript("録音停止エラー");
+        }
+
+        if (sessionActiveRef.current) {
+          startWhisperChunk();
+        }
+      }, CHUNK_DURATION_MS);
+    } catch (e: any) {
+      setError(`録音エラー: ${e.message}`);
+      setLastTranscript(`録音エラー詳細: ${e.message}`);
+      setIsListening(false);
+    }
+  }, [processWhisperChunk, startCloudRecording, stopCloudRecordingInternal]);
+
+  const stopWhisperRecording = useCallback(async () => {
+    if (chunkTimerRef.current) {
+      clearTimeout(chunkTimerRef.current);
+      chunkTimerRef.current = null;
+    }
+
+    try {
+      const uri = await stopCloudRecordingInternal();
+
+      if (uri) {
+        setLastTranscript("最後のWhisperチャンクを処理中...");
+        await processWhisperChunk(uri);
+      }
+    } catch {
+      // ignore
+    }
+    setIsListening(false);
+  }, [processWhisperChunk, stopCloudRecordingInternal]);
 
   // ===== ローカル推定音声認識 (Expo Go 向け) =====
   const getLocalThresholdDb = useCallback(() => {
@@ -489,7 +622,7 @@ export function useDaimokuRecognition(
 
   // ===== 開始・停止・リセット =====
   const start = useCallback(async () => {
-    if (mode === "cloud" || mode === "local") {
+    if (mode === "cloud" || mode === "local" || mode === "whisper") {
       const granted = await ensureCloudRecordingPermission();
       if (!granted) {
         setError("マイクの権限が必要です");
@@ -498,16 +631,43 @@ export function useDaimokuRecognition(
     }
 
     if (mode === "native" && ExpoSpeechRecognitionModule) {
-      const { granted } =
-        await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!isNativeOnDeviceRecognitionAvailable()) {
+        setError("この端末ではオンデバイス音声認識が利用できません");
+        return;
+      }
+
+      const requestPermission =
+        typeof ExpoSpeechRecognitionModule.requestMicrophonePermissionsAsync === "function"
+          ? ExpoSpeechRecognitionModule.requestMicrophonePermissionsAsync.bind(
+            ExpoSpeechRecognitionModule,
+          )
+          : ExpoSpeechRecognitionModule.requestPermissionsAsync.bind(
+            ExpoSpeechRecognitionModule,
+          );
+
+      const { granted } = await requestPermission();
       if (!granted) {
         setError("マイクと音声認識の権限が必要です");
         return;
       }
     }
 
+    if (mode === "whisper") {
+      setError(null);
+      setLastTranscript("Whisperモデルを準備中...");
+      const warmupResult = await warmupLocalWhisper();
+      if (!warmupResult.success) {
+        setError(`Whisper準備エラー: ${warmupResult.error}`);
+        return;
+      }
+      if (warmupResult.downloaded) {
+        setLastTranscript("Whisperモデルをダウンロードしました。録音を開始します...");
+      }
+    }
+
     counter.current.reset();
     cloudCountRef.current = 0;
+    whisperCountRef.current = 0;
     lastRecordingUriRef.current = null;
     setCount(0);
     setError(null);
@@ -522,6 +682,9 @@ export function useDaimokuRecognition(
     } else if (mode === "cloud") {
       switchCloudRecorderEngine("expo-audio");
       startCloudChunk();
+    } else if (mode === "whisper") {
+      switchCloudRecorderEngine("expo-audio");
+      startWhisperChunk();
     } else if (mode === "local") {
       const started = await startLocalRecognition();
       if (!started) {
@@ -530,7 +693,7 @@ export function useDaimokuRecognition(
         stopTimer();
       }
     }
-  }, [mode, ensureCloudRecordingPermission, startRecognition, startCloudChunk, startLocalRecognition, startTimer, stopTimer, switchCloudRecorderEngine]);
+  }, [mode, ensureCloudRecordingPermission, startRecognition, startCloudChunk, startLocalRecognition, startTimer, stopTimer, startWhisperChunk, switchCloudRecorderEngine]);
 
   const stop = useCallback(async () => {
     sessionActiveRef.current = false;
@@ -541,10 +704,12 @@ export function useDaimokuRecognition(
       ExpoSpeechRecognitionModule.stop();
     } else if (mode === "cloud") {
       await stopCloudRecording();
+    } else if (mode === "whisper") {
+      await stopWhisperRecording();
     } else if (mode === "local") {
       await stopLocalRecognition();
     }
-  }, [mode, stopLocalRecognition, stopTimer, stopCloudRecording]);
+  }, [mode, stopLocalRecognition, stopTimer, stopCloudRecording, stopWhisperRecording]);
 
   useEffect(() => {
     return () => {
@@ -562,6 +727,7 @@ export function useDaimokuRecognition(
     stop();
     counter.current.reset();
     cloudCountRef.current = 0;
+    whisperCountRef.current = 0;
     lastRecordingUriRef.current = null;
     setCount(0);
     setElapsedSeconds(0);

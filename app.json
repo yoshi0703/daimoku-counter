@@ -18,14 +18,18 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.yoshi0703.daimokucounter",
       "entitlements": {
-        "com.apple.security.application-groups": ["group.com.yoshi0703.daimokucounter"]
+        "com.apple.security.application-groups": [
+          "group.com.yoshi0703.daimokucounter"
+        ]
       },
       "infoPlist": {
         "NSSpeechRecognitionUsageDescription": "唱題の回数を数えるために音声認識を使用します",
         "NSMicrophoneUsageDescription": "唱題の音声を聞くためにマイクを使用します",
         "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "唱題記録のスクリーンショットを保存するためにフォトライブラリを使用します",
-        "UIBackgroundModes": ["audio"],
+        "UIBackgroundModes": [
+          "audio"
+        ],
         "NSSupportsLiveActivities": true,
         "NSSupportsLiveActivitiesFrequentUpdates": true
       },
@@ -33,7 +37,9 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
           }
         ]
       }
@@ -71,7 +77,8 @@
         }
       ],
       "expo-audio",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
