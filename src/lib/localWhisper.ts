@@ -53,11 +53,13 @@ let whisperContextPromise: Promise<Awaited<ReturnType<WhisperModuleType["initWhi
 
 async function ensureModelFile(): Promise<{ path: string; downloaded: boolean }> {
   const bundledModel = Asset.fromModule(BUNDLED_MODEL_MODULE);
+  let downloaded = false;
   if (!bundledModel.localUri) {
     await bundledModel.downloadAsync();
+    downloaded = true;
   }
   if (bundledModel.localUri) {
-    return { path: bundledModel.localUri, downloaded: false };
+    return { path: bundledModel.localUri, downloaded };
   }
 
   // 後方互換: 旧バージョンのランタイム配置済みモデルがあれば利用
