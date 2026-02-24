@@ -111,6 +111,11 @@ export function useDaimokuRecognition(
   const hybridWhisperCountRef = useRef(0);
   const hybridWhisperChunksRef = useRef(0);
   const hybridWhisperQueueRef = useRef(Promise.resolve());
+  const waitForHybridSplitSettle = useCallback(async () => {
+    while (hybridSplittingRef.current) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 20));
+    }
+  }, []);
 
   // Ref でキーを保持（クロージャーの stale 値問題を回避）
   const deepgramKeyRef = useRef(deepgramKey);
@@ -502,6 +507,10 @@ export function useDaimokuRecognition(
           setLastTranscript(`Whisperエラー: ${result.error}`);
         }
       })
+      .catch((e: any) => {
+        setError(`Whisperキュー処理エラー: ${e?.message ?? "unknown"}`);
+        setLastTranscript("Whisperキュー処理で想定外エラーが発生しました");
+      })
       .finally(async () => {
         try {
           await FileSystem.deleteAsync(uri, { idempotent: true });
@@ -533,11 +542,17 @@ export function useDaimokuRecognition(
         void queueHybridWhisperChunk(uri);
       }
 
+      if (!sessionActiveRef.current) return;
+
       const next = new Audio.Recording();
       await next.prepareToRecordAsync({
         ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
         isMeteringEnabled: true,
       });
+      if (!sessionActiveRef.current) {
+        await next.stopAndUnloadAsync().catch(() => {});
+        return;
+      }
       next.setProgressUpdateInterval(HYBRID_PROGRESS_UPDATE_MS);
       next.setOnRecordingStatusUpdate((status) => {
         if (!sessionActiveRef.current || !status.isRecording) return;
@@ -569,6 +584,10 @@ export function useDaimokuRecognition(
         }
       });
       await next.startAsync();
+      if (!sessionActiveRef.current) {
+        await next.stopAndUnloadAsync().catch(() => {});
+        return;
+      }
       hybridRecordingRef.current = next;
       hybridSegmentStartedAtMsRef.current = Date.now();
       hybridSawSpeechRef.current = false;
@@ -640,6 +659,7 @@ export function useDaimokuRecognition(
   }, [resetHybridSegmentationState, splitHybridSegment]);
 
   const stopHybridRecordingAndFinalize = useCallback(async () => {
+    await waitForHybridSplitSettle();
     const recording = hybridRecordingRef.current;
     if (recording) {
       try {
@@ -669,7 +689,7 @@ export function useDaimokuRecognition(
     );
     setIsListening(false);
     return finalCount;
-  }, [queueHybridWhisperChunk]);
+  }, [queueHybridWhisperChunk, waitForHybridSplitSettle]);
 
   // ===== ローカル推定音声認識 (Expo Go 向け) =====
   const getLocalThresholdDb = useCallback(() => {
