@@ -111,6 +111,7 @@ export function useDaimokuRecognition(
   const hybridWhisperCountRef = useRef(0);
   const hybridWhisperChunksRef = useRef(0);
   const hybridWhisperQueueRef = useRef(Promise.resolve());
+  const stopInProgressRef = useRef(false);
   const waitForHybridSplitSettle = useCallback(async () => {
     while (hybridSplittingRef.current) {
       await new Promise<void>((resolve) => setTimeout(resolve, 20));
@@ -850,6 +851,11 @@ export function useDaimokuRecognition(
 
   // ===== 開始・停止・リセット =====
   const start = useCallback(async () => {
+    if (stopInProgressRef.current) {
+      setError("停止処理中です。完了までしばらくお待ちください。");
+      return;
+    }
+
     if (mode === "cloud" || mode === "local" || mode === "whisper" || mode === "hybrid") {
       const granted = await ensureCloudRecordingPermission();
       if (!granted) {
@@ -941,22 +947,28 @@ export function useDaimokuRecognition(
   }, [mode, ensureCloudRecordingPermission, startRecognition, startCloudChunk, startLocalRecognition, startTimer, stopTimer, startWhisperChunk, switchCloudRecorderEngine, startHybridRecording]);
 
   const stop = useCallback(async () => {
+    if (stopInProgressRef.current) return count;
+    stopInProgressRef.current = true;
     let finalCount = count;
-    sessionActiveRef.current = false;
-    setIsSessionActive(false);
-    stopTimer();
+    try {
+      sessionActiveRef.current = false;
+      setIsSessionActive(false);
+      stopTimer();
 
-    if ((mode === "native" || mode === "hybrid") && ExpoSpeechRecognitionModule) {
-      ExpoSpeechRecognitionModule.stop();
-      if (mode === "hybrid") {
-        finalCount = await stopHybridRecordingAndFinalize();
+      if ((mode === "native" || mode === "hybrid") && ExpoSpeechRecognitionModule) {
+        ExpoSpeechRecognitionModule.stop();
+        if (mode === "hybrid") {
+          finalCount = await stopHybridRecordingAndFinalize();
+        }
+      } else if (mode === "cloud") {
+        await stopCloudRecording();
+      } else if (mode === "whisper") {
+        await stopWhisperRecording();
+      } else if (mode === "local") {
+        await stopLocalRecognition();
       }
-    } else if (mode === "cloud") {
-      await stopCloudRecording();
-    } else if (mode === "whisper") {
-      await stopWhisperRecording();
-    } else if (mode === "local") {
-      await stopLocalRecognition();
+    } finally {
+      stopInProgressRef.current = false;
     }
     return finalCount;
   }, [count, mode, stopLocalRecognition, stopTimer, stopCloudRecording, stopWhisperRecording, stopHybridRecordingAndFinalize]);
