@@ -77,7 +77,7 @@ export default function CounterScreen() {
   }, [fetchTodayTotal]);
 
   const handleStop = useCallback(async () => {
-    await stop();
+    const finalizedCount = await stop();
     if (liveActivityUpdateTimerRef.current) {
       clearTimeout(liveActivityUpdateTimerRef.current);
       liveActivityUpdateTimerRef.current = null;
@@ -94,10 +94,10 @@ export default function CounterScreen() {
         pushToken: liveActivityPushToken,
         event: "end",
         contentState: {
-          count,
+          count: finalizedCount,
           elapsedSeconds,
           mode,
-          todayTotal: todayTotal + count,
+          todayTotal: todayTotal + finalizedCount,
         },
         dismissalDate: Math.floor(Date.now() / 1000),
       });
@@ -105,10 +105,10 @@ export default function CounterScreen() {
 
     if (liveActivityId) {
       await stopDaimokuLiveActivity(liveActivityId, {
-        count,
+        count: finalizedCount,
         elapsedSeconds,
         mode,
-        todayTotal: todayTotal + count,
+        todayTotal: todayTotal + finalizedCount,
       });
       liveActivityIdRef.current = null;
     }
@@ -121,36 +121,35 @@ export default function CounterScreen() {
       count: 0,
       elapsedSeconds: 0,
       mode,
-      todayTotal: todayTotal + count,
+      todayTotal: todayTotal + finalizedCount,
       isRecording: false,
     });
-    widgetLastSignatureRef.current = `0|${mode}|${todayTotal + count}|0`;
+    widgetLastSignatureRef.current = `0|${mode}|${todayTotal + finalizedCount}|0`;
     widgetLastSyncAtRef.current = Date.now();
 
     sessionStartedAtRef.current = null;
 
     const recordingUri = getLastRecordingUri();
-    if (count > 0) {
-      await saveSession(count, elapsedSeconds);
+    if (finalizedCount > 0) {
+      await saveSession(finalizedCount, elapsedSeconds);
       await fetchTodayTotal();
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       if (
         audioContributionEnabled &&
         recordingUri &&
-        (mode === "local" || mode === "whisper")
+        (mode === "local" || mode === "whisper" || mode === "hybrid")
       ) {
         uploadAudioContribution({
           uri: recordingUri,
           durationSeconds: elapsedSeconds,
-          daimokuCount: count,
+          daimokuCount: finalizedCount,
           recognitionMode: mode,
         });
       }
     }
   }, [
     stop,
-    count,
     elapsedSeconds,
     mode,
     todayTotal,
@@ -181,6 +180,7 @@ export default function CounterScreen() {
     mode === "native" ||
     mode === "cloud" ||
     mode === "local" ||
+    mode === "hybrid" ||
     mode === "whisper";
   const showDebugTranscript = __DEV__;
   const modeLabel = mode === "cloud"

@@ -1,4 +1,5 @@
 import { Platform, TurboModuleRegistry } from "react-native";
+import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system/legacy";
 
 type WhisperModuleType = {
@@ -35,8 +36,8 @@ type WhisperTranscriptionResult =
   | { success: false; error: string };
 
 const MODEL_NAME = "ggml-tiny.bin";
-const MODEL_URL =
-  "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const BUNDLED_MODEL_MODULE = require("../../assets/whisper/ggml-tiny.bin");
 const ROOT_DIR = `${FileSystem.documentDirectory ?? FileSystem.cacheDirectory}whisper`;
 const MODEL_PATH = `${ROOT_DIR}/${MODEL_NAME}`;
 
@@ -51,31 +52,23 @@ try {
 let whisperContextPromise: Promise<Awaited<ReturnType<WhisperModuleType["initWhisper"]>>> | null = null;
 
 async function ensureModelFile(): Promise<{ path: string; downloaded: boolean }> {
+  const bundledModel = Asset.fromModule(BUNDLED_MODEL_MODULE);
+  let downloaded = false;
+  if (!bundledModel.localUri) {
+    await bundledModel.downloadAsync();
+    downloaded = true;
+  }
+  if (bundledModel.localUri) {
+    return { path: bundledModel.localUri, downloaded };
+  }
+
+  // 後方互換: 旧バージョンのランタイム配置済みモデルがあれば利用
   const existing = await FileSystem.getInfoAsync(MODEL_PATH);
   if (existing.exists && (existing.size ?? 0) > 0) {
     return { path: MODEL_PATH, downloaded: false };
   }
 
-  await FileSystem.makeDirectoryAsync(ROOT_DIR, { intermediates: true });
-
-  const tempPath = `${MODEL_PATH}.download`;
-  const tempExists = await FileSystem.getInfoAsync(tempPath);
-  if (tempExists.exists) {
-    await FileSystem.deleteAsync(tempPath, { idempotent: true });
-  }
-
-  const download = await FileSystem.downloadAsync(MODEL_URL, tempPath);
-  if (download.status !== 200) {
-    throw new Error(`モデルのダウンロードに失敗しました (status=${download.status})`);
-  }
-
-  const finalExists = await FileSystem.getInfoAsync(MODEL_PATH);
-  if (finalExists.exists) {
-    await FileSystem.deleteAsync(MODEL_PATH, { idempotent: true });
-  }
-
-  await FileSystem.moveAsync({ from: tempPath, to: MODEL_PATH });
-  return { path: MODEL_PATH, downloaded: true };
+  throw new Error("Whisperモデルが同梱されていません。アプリを再インストールしてください。");
 }
 
 async function getWhisperContext() {
