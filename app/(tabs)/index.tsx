@@ -138,7 +138,7 @@ export default function CounterScreen() {
       if (
         audioContributionEnabled &&
         recordingUri &&
-        (mode === "local" || mode === "whisper")
+        (mode === "local" || mode === "whisper" || mode === "hybrid")
       ) {
         uploadAudioContribution({
           uri: recordingUri,
@@ -181,6 +181,7 @@ export default function CounterScreen() {
     mode === "native" ||
     mode === "cloud" ||
     mode === "local" ||
+    mode === "hybrid" ||
     mode === "whisper";
   const showDebugTranscript = __DEV__;
   const modeLabel = mode === "cloud"

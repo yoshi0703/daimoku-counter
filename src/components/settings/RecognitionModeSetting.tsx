@@ -87,7 +87,7 @@ export function RecognitionModeSetting({
     <View style={styles.container}>
       <Text style={styles.title}>認識モード</Text>
       <Text style={styles.description}>
-        local は端末内認識です（iPhone Development BuildではWhisperを使用）。
+        local は端末内認識です（iPhoneではリアルタイム認識＋Whisper補正）。
         cloud はAPI経由の認識です。
       </Text>
 

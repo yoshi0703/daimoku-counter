@@ -6,6 +6,7 @@ import {
   RecordingPresets,
 } from "expo-audio";
 import { Audio } from "expo-av";
+import * as FileSystem from "expo-file-system/legacy";
 import type { AudioRecorder } from "expo-audio";
 import type { RecognitionModePreference } from "@/src/hooks/useApiKeys";
 import {
@@ -51,7 +52,7 @@ function isNativeOnDeviceRecognitionAvailable(): boolean {
 /** 録音チャンクの長さ（ミリ秒） */
 const CHUNK_DURATION_MS = 15000;
 type CloudRecorderEngine = "expo-audio" | "expo-av";
-type RecognitionMode = "native" | "cloud" | "local" | "whisper" | "manual";
+type RecognitionMode = "native" | "cloud" | "local" | "whisper" | "hybrid" | "manual";
 
 // Expo Go 向けローカル推定モード（メータリングベース）
 // v2: 実録音(51回/60秒)で検証済みパラメータ — 高速唱題(~1.18s/cycle)対応
@@ -61,6 +62,11 @@ const LOCAL_MAX_GAP_MS = 1700;
 const LOCAL_THRESHOLD_OFFSET_DB = 2.0;   // 1.0→2.0: ノイズ耐性向上
 const LOCAL_THRESHOLD_FLOOR_DB = -35;    // -38→-35: 微弱ノイズ除外
 const LOCAL_PEAK_PROMINENCE_DB = 2.5;    // 0.30→2.5: 偽陽性の大幅削減
+const HYBRID_PROGRESS_UPDATE_MS = 150;
+const HYBRID_MIN_SEGMENT_MS = 1800;
+const HYBRID_SILENCE_HOLD_MS = 900;
+const HYBRID_SPEECH_MARGIN_DB = 6;
+const HYBRID_NOISE_FLOOR_DB = -42;
 
 export function useDaimokuRecognition(
   deepgramKey: string | null,
@@ -95,6 +101,16 @@ export function useDaimokuRecognition(
   const localPrevSampleTimeMsRef = useRef<number | null>(null);
   const localRecentIntervalsRef = useRef<number[]>([]);
   const lastRecordingUriRef = useRef<string | null>(null);
+  const nativeCountRef = useRef(0);
+  const hybridRecordingRef = useRef<Audio.Recording | null>(null);
+  const hybridNoiseFloorDbRef = useRef(-55);
+  const hybridLastSpeechAtMsRef = useRef(0);
+  const hybridSegmentStartedAtMsRef = useRef(0);
+  const hybridSawSpeechRef = useRef(false);
+  const hybridSplittingRef = useRef(false);
+  const hybridWhisperCountRef = useRef(0);
+  const hybridWhisperChunksRef = useRef(0);
+  const hybridWhisperQueueRef = useRef(Promise.resolve());
 
   // Ref でキーを保持（クロージャーの stale 値問題を回避）
   const deepgramKeyRef = useRef(deepgramKey);
@@ -212,7 +228,11 @@ export function useDaimokuRecognition(
       return;
     }
 
-    if (preferredMode === "local") {
+      if (preferredMode === "local") {
+      if (nativeAvailable && whisperAvailable) {
+        setMode("hybrid");
+        return;
+      }
       if (whisperAvailable) {
         setMode("whisper");
         return;
@@ -276,6 +296,7 @@ export function useDaimokuRecognition(
     const transcript = selectBestDaimokuTranscript(event.results);
     const isFinal = event.isFinal;
     const newCount = counter.current.processResult(transcript, isFinal);
+    nativeCountRef.current = newCount;
     setCount(newCount);
     setLastTranscript(transcript);
   });
@@ -463,6 +484,192 @@ export function useDaimokuRecognition(
     setIsListening(false);
   }, [processWhisperChunk, stopCloudRecordingInternal]);
 
+  const queueHybridWhisperChunk = useCallback((uri: string) => {
+    hybridWhisperQueueRef.current = hybridWhisperQueueRef.current
+      .then(async () => {
+        const result = await transcribeWithLocalWhisper(uri);
+        if (result.success) {
+          const chunkCount = countOccurrences(result.transcript);
+          hybridWhisperChunksRef.current += 1;
+          hybridWhisperCountRef.current += chunkCount;
+          setLastTranscript(
+            result.transcript
+              ? `[hybrid/whisper:${chunkCount}] ${result.transcript}`
+              : "[hybrid/whisper] (無音)",
+          );
+        } else {
+          setError(result.error ?? "Whisper文字起こしエラー");
+          setLastTranscript(`Whisperエラー: ${result.error}`);
+        }
+      })
+      .finally(async () => {
+        try {
+          await FileSystem.deleteAsync(uri, { idempotent: true });
+        } catch {
+          // ignore
+        }
+      });
+
+    return hybridWhisperQueueRef.current;
+  }, []);
+
+  const resetHybridSegmentationState = useCallback(() => {
+    hybridNoiseFloorDbRef.current = -55;
+    hybridLastSpeechAtMsRef.current = 0;
+    hybridSegmentStartedAtMsRef.current = 0;
+    hybridSawSpeechRef.current = false;
+  }, []);
+
+  const splitHybridSegment = useCallback(async () => {
+    const current = hybridRecordingRef.current;
+    if (!current || hybridSplittingRef.current || !sessionActiveRef.current) return;
+    hybridSplittingRef.current = true;
+
+    try {
+      current.setOnRecordingStatusUpdate(null);
+      await current.stopAndUnloadAsync();
+      const uri = current.getURI();
+      if (uri) {
+        void queueHybridWhisperChunk(uri);
+      }
+
+      const next = new Audio.Recording();
+      await next.prepareToRecordAsync({
+        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+        isMeteringEnabled: true,
+      });
+      next.setProgressUpdateInterval(HYBRID_PROGRESS_UPDATE_MS);
+      next.setOnRecordingStatusUpdate((status) => {
+        if (!sessionActiveRef.current || !status.isRecording) return;
+        if (typeof status.metering !== "number") return;
+        if (hybridSplittingRef.current) return;
+
+        const now = Date.now();
+        const db = status.metering;
+        const noiseAlpha = db < hybridNoiseFloorDbRef.current + HYBRID_SPEECH_MARGIN_DB ? 0.04 : 0.01;
+        hybridNoiseFloorDbRef.current =
+          hybridNoiseFloorDbRef.current * (1 - noiseAlpha) + db * noiseAlpha;
+
+        const speechThreshold = Math.max(HYBRID_NOISE_FLOOR_DB, hybridNoiseFloorDbRef.current + HYBRID_SPEECH_MARGIN_DB);
+        if (db >= speechThreshold) {
+          hybridSawSpeechRef.current = true;
+          hybridLastSpeechAtMsRef.current = now;
+          return;
+        }
+
+        const silenceMs = hybridLastSpeechAtMsRef.current > 0 ? now - hybridLastSpeechAtMsRef.current : 0;
+        const segmentMs = hybridSegmentStartedAtMsRef.current > 0 ? now - hybridSegmentStartedAtMsRef.current : 0;
+
+        if (
+          hybridSawSpeechRef.current &&
+          silenceMs >= HYBRID_SILENCE_HOLD_MS &&
+          segmentMs >= HYBRID_MIN_SEGMENT_MS
+        ) {
+          void splitHybridSegment();
+        }
+      });
+      await next.startAsync();
+      hybridRecordingRef.current = next;
+      hybridSegmentStartedAtMsRef.current = Date.now();
+      hybridSawSpeechRef.current = false;
+      hybridLastSpeechAtMsRef.current = 0;
+    } catch (e: any) {
+      setError(`ハイブリッド分割エラー: ${e?.message ?? "unknown"}`);
+    } finally {
+      hybridSplittingRef.current = false;
+    }
+  }, [queueHybridWhisperChunk]);
+
+  const startHybridRecording = useCallback(async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        playThroughEarpieceAndroid: false,
+        shouldDuckAndroid: true,
+      });
+
+      resetHybridSegmentationState();
+
+      const recording = new Audio.Recording();
+      await recording.prepareToRecordAsync({
+        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+        isMeteringEnabled: true,
+      });
+      recording.setProgressUpdateInterval(HYBRID_PROGRESS_UPDATE_MS);
+      recording.setOnRecordingStatusUpdate((status) => {
+        if (!sessionActiveRef.current || !status.isRecording) return;
+        if (typeof status.metering !== "number") return;
+        if (hybridSplittingRef.current) return;
+
+        const now = Date.now();
+        const db = status.metering;
+        const noiseAlpha = db < hybridNoiseFloorDbRef.current + HYBRID_SPEECH_MARGIN_DB ? 0.04 : 0.01;
+        hybridNoiseFloorDbRef.current =
+          hybridNoiseFloorDbRef.current * (1 - noiseAlpha) + db * noiseAlpha;
+
+        const speechThreshold = Math.max(HYBRID_NOISE_FLOOR_DB, hybridNoiseFloorDbRef.current + HYBRID_SPEECH_MARGIN_DB);
+        if (db >= speechThreshold) {
+          hybridSawSpeechRef.current = true;
+          hybridLastSpeechAtMsRef.current = now;
+          return;
+        }
+
+        const silenceMs = hybridLastSpeechAtMsRef.current > 0 ? now - hybridLastSpeechAtMsRef.current : 0;
+        const segmentMs = hybridSegmentStartedAtMsRef.current > 0 ? now - hybridSegmentStartedAtMsRef.current : 0;
+
+        if (
+          hybridSawSpeechRef.current &&
+          silenceMs >= HYBRID_SILENCE_HOLD_MS &&
+          segmentMs >= HYBRID_MIN_SEGMENT_MS
+        ) {
+          void splitHybridSegment();
+        }
+      });
+
+      await recording.startAsync();
+      hybridRecordingRef.current = recording;
+      hybridSegmentStartedAtMsRef.current = Date.now();
+      setIsListening(true);
+      return true;
+    } catch (e: any) {
+      setError(`ハイブリッド録音エラー: ${e?.message ?? "unknown"}`);
+      return false;
+    }
+  }, [resetHybridSegmentationState, splitHybridSegment]);
+
+  const stopHybridRecordingAndFinalize = useCallback(async () => {
+    const recording = hybridRecordingRef.current;
+    if (recording) {
+      try {
+        recording.setOnRecordingStatusUpdate(null);
+        await recording.stopAndUnloadAsync();
+        const uri = recording.getURI();
+        if (uri) {
+          void queueHybridWhisperChunk(uri);
+        }
+      } catch {
+        // ignore
+      } finally {
+        hybridRecordingRef.current = null;
+      }
+    }
+
+    setLastTranscript("正確なカウントを処理中です。アプリを閉じないでください。");
+    await hybridWhisperQueueRef.current;
+
+    const finalCount =
+      hybridWhisperChunksRef.current > 0
+        ? hybridWhisperCountRef.current
+        : nativeCountRef.current;
+    setCount(finalCount);
+    setLastTranscript(
+      `確定: ${finalCount}回 (リアルタイム:${nativeCountRef.current} / Whisper:${hybridWhisperCountRef.current})`,
+    );
+    setIsListening(false);
+  }, [queueHybridWhisperChunk]);
+
   // ===== ローカル推定音声認識 (Expo Go 向け) =====
   const getLocalThresholdDb = useCallback(() => {
     return Math.max(
@@ -622,7 +829,7 @@ export function useDaimokuRecognition(
 
   // ===== 開始・停止・リセット =====
   const start = useCallback(async () => {
-    if (mode === "cloud" || mode === "local" || mode === "whisper") {
+    if (mode === "cloud" || mode === "local" || mode === "whisper" || mode === "hybrid") {
       const granted = await ensureCloudRecordingPermission();
       if (!granted) {
         setError("マイクの権限が必要です");
@@ -630,7 +837,7 @@ export function useDaimokuRecognition(
       }
     }
 
-    if (mode === "native" && ExpoSpeechRecognitionModule) {
+    if ((mode === "native" || mode === "hybrid") && ExpoSpeechRecognitionModule) {
       if (!isNativeOnDeviceRecognitionAvailable()) {
         setError("この端末ではオンデバイス音声認識が利用できません");
         return;
@@ -668,6 +875,10 @@ export function useDaimokuRecognition(
     counter.current.reset();
     cloudCountRef.current = 0;
     whisperCountRef.current = 0;
+    nativeCountRef.current = 0;
+    hybridWhisperCountRef.current = 0;
+    hybridWhisperChunksRef.current = 0;
+    hybridWhisperQueueRef.current = Promise.resolve();
     lastRecordingUriRef.current = null;
     setCount(0);
     setError(null);
@@ -679,6 +890,15 @@ export function useDaimokuRecognition(
 
     if (mode === "native") {
       startRecognition();
+    } else if (mode === "hybrid") {
+      setLastTranscript("リアルタイム認識を開始し、無音区間ごとにWhisperで検証します...");
+      startRecognition();
+      const started = await startHybridRecording();
+      if (!started) {
+        sessionActiveRef.current = false;
+        setIsSessionActive(false);
+        stopTimer();
+      }
     } else if (mode === "cloud") {
       switchCloudRecorderEngine("expo-audio");
       startCloudChunk();
@@ -693,15 +913,18 @@ export function useDaimokuRecognition(
         stopTimer();
       }
     }
-  }, [mode, ensureCloudRecordingPermission, startRecognition, startCloudChunk, startLocalRecognition, startTimer, stopTimer, startWhisperChunk, switchCloudRecorderEngine]);
+  }, [mode, ensureCloudRecordingPermission, startRecognition, startCloudChunk, startLocalRecognition, startTimer, stopTimer, startWhisperChunk, switchCloudRecorderEngine, startHybridRecording]);
 
   const stop = useCallback(async () => {
     sessionActiveRef.current = false;
     setIsSessionActive(false);
     stopTimer();
 
-    if (mode === "native" && ExpoSpeechRecognitionModule) {
+    if ((mode === "native" || mode === "hybrid") && ExpoSpeechRecognitionModule) {
       ExpoSpeechRecognitionModule.stop();
+      if (mode === "hybrid") {
+        await stopHybridRecordingAndFinalize();
+      }
     } else if (mode === "cloud") {
       await stopCloudRecording();
     } else if (mode === "whisper") {
@@ -709,7 +932,7 @@ export function useDaimokuRecognition(
     } else if (mode === "local") {
       await stopLocalRecognition();
     }
-  }, [mode, stopLocalRecognition, stopTimer, stopCloudRecording, stopWhisperRecording]);
+  }, [mode, stopLocalRecognition, stopTimer, stopCloudRecording, stopWhisperRecording, stopHybridRecordingAndFinalize]);
 
   useEffect(() => {
     return () => {
@@ -719,6 +942,10 @@ export function useDaimokuRecognition(
       if (localRecordingRef.current) {
         localRecordingRef.current.setOnRecordingStatusUpdate(null);
         localRecordingRef.current.stopAndUnloadAsync().catch(() => {});
+      }
+      if (hybridRecordingRef.current) {
+        hybridRecordingRef.current.setOnRecordingStatusUpdate(null);
+        hybridRecordingRef.current.stopAndUnloadAsync().catch(() => {});
       }
     };
   }, []);
