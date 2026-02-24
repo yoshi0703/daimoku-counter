@@ -111,6 +111,7 @@ export function useDaimokuRecognition(
   const hybridWhisperCountRef = useRef(0);
   const hybridWhisperChunksRef = useRef(0);
   const hybridWhisperQueueRef = useRef(Promise.resolve());
+  const manualIncrementRef = useRef(0);
   const stopInProgressRef = useRef(false);
   const waitForHybridSplitSettle = useCallback(async () => {
     while (hybridSplittingRef.current) {
@@ -680,13 +681,14 @@ export function useDaimokuRecognition(
     setLastTranscript("正確なカウントを処理中です。アプリを閉じないでください。");
     await hybridWhisperQueueRef.current;
 
-    const finalCount =
+    const baseCount =
       hybridWhisperChunksRef.current > 0
         ? hybridWhisperCountRef.current
         : nativeCountRef.current;
+    const finalCount = baseCount + manualIncrementRef.current;
     setCount(finalCount);
     setLastTranscript(
-      `確定: ${finalCount}回 (リアルタイム:${nativeCountRef.current} / Whisper:${hybridWhisperCountRef.current})`,
+      `確定: ${finalCount}回 (リアルタイム:${nativeCountRef.current} / Whisper:${hybridWhisperCountRef.current} / 手動:${manualIncrementRef.current})`,
     );
     setIsListening(false);
     return finalCount;
@@ -906,6 +908,7 @@ export function useDaimokuRecognition(
     hybridWhisperCountRef.current = 0;
     hybridWhisperChunksRef.current = 0;
     hybridWhisperQueueRef.current = Promise.resolve();
+    manualIncrementRef.current = 0;
     lastRecordingUriRef.current = null;
     setCount(0);
     setError(null);
@@ -994,6 +997,7 @@ export function useDaimokuRecognition(
     counter.current.reset();
     cloudCountRef.current = 0;
     whisperCountRef.current = 0;
+    manualIncrementRef.current = 0;
     lastRecordingUriRef.current = null;
     setCount(0);
     setElapsedSeconds(0);
@@ -1002,6 +1006,9 @@ export function useDaimokuRecognition(
   }, [stop]);
 
   const increment = useCallback(() => {
+    if (sessionActiveRef.current) {
+      manualIncrementRef.current += 1;
+    }
     setCount((prev) => prev + 1);
   }, []);
 
