@@ -19,6 +19,19 @@ export const DAIMOKU_VARIANTS = [
   "なむみょうほーれんげきょう",
 ];
 
+function toHiragana(input: string): string {
+  return input.replace(/[\u30a1-\u30f6]/g, (char) =>
+    String.fromCharCode(char.charCodeAt(0) - 0x60),
+  );
+}
+
+function normalizeForCount(text: string): string {
+  return toHiragana(text)
+    .replace(/\s+/g, "")
+    .replace(/[、。,.!！?？\-ー]/g, "")
+    .toLowerCase();
+}
+
 const DAIMOKU_CONTEXTUAL_STRINGS = Array.from(
   new Set([
     ...DAIMOKU_VARIANTS,
@@ -41,20 +54,36 @@ type RecognitionResultLike = {
  * 全バリアントを試し、最大カウントを返す。
  */
 export function countOccurrences(text: string): number {
-  const normalized = text.replace(/\s+/g, "").replace(/[、。,.\-]/g, "");
+  const normalized = normalizeForCount(text);
 
   let maxCount = 0;
   for (const variant of DAIMOKU_VARIANTS) {
+    const normalizedVariant = normalizeForCount(variant);
     let count = 0;
     let searchFrom = 0;
     while (true) {
-      const idx = normalized.indexOf(variant, searchFrom);
+      const idx = normalized.indexOf(normalizedVariant, searchFrom);
       if (idx === -1) break;
       count++;
-      searchFrom = idx + variant.length;
+      searchFrom = idx + normalizedVariant.length;
     }
     maxCount = Math.max(maxCount, count);
   }
+
+  // 既知バリアントで拾えない軽微な誤認識を補足
+  if (maxCount === 0) {
+    const fuzzyPatterns = [
+      /南無妙法蓮華[経經教]/g,
+      /な[んむも]?みょ[うー]?ほ[うー]?れんげきょ[うー]?/g,
+    ];
+    for (const pattern of fuzzyPatterns) {
+      const matches = normalized.match(pattern);
+      if (matches) {
+        maxCount = Math.max(maxCount, matches.length);
+      }
+    }
+  }
+
   return maxCount;
 }
 
