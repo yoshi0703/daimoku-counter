@@ -668,6 +668,7 @@ export function useDaimokuRecognition(
       `確定: ${finalCount}回 (リアルタイム:${nativeCountRef.current} / Whisper:${hybridWhisperCountRef.current})`,
     );
     setIsListening(false);
+    return finalCount;
   }, [queueHybridWhisperChunk]);
 
   // ===== ローカル推定音声認識 (Expo Go 向け) =====
@@ -859,7 +860,7 @@ export function useDaimokuRecognition(
       }
     }
 
-    if (mode === "whisper") {
+    if (mode === "whisper" || mode === "hybrid") {
       setError(null);
       setLastTranscript("Whisperモデルを準備中...");
       const warmupResult = await warmupLocalWhisper();
@@ -868,7 +869,7 @@ export function useDaimokuRecognition(
         return;
       }
       if (warmupResult.downloaded) {
-        setLastTranscript("Whisperモデルをダウンロードしました。録音を開始します...");
+        setLastTranscript("Whisperモデルの準備が完了しました。録音を開始します...");
       }
     }
 
@@ -895,6 +896,10 @@ export function useDaimokuRecognition(
       startRecognition();
       const started = await startHybridRecording();
       if (!started) {
+        if (ExpoSpeechRecognitionModule) {
+          ExpoSpeechRecognitionModule.stop();
+        }
+        setIsListening(false);
         sessionActiveRef.current = false;
         setIsSessionActive(false);
         stopTimer();
@@ -916,6 +921,7 @@ export function useDaimokuRecognition(
   }, [mode, ensureCloudRecordingPermission, startRecognition, startCloudChunk, startLocalRecognition, startTimer, stopTimer, startWhisperChunk, switchCloudRecorderEngine, startHybridRecording]);
 
   const stop = useCallback(async () => {
+    let finalCount = count;
     sessionActiveRef.current = false;
     setIsSessionActive(false);
     stopTimer();
@@ -923,7 +929,7 @@ export function useDaimokuRecognition(
     if ((mode === "native" || mode === "hybrid") && ExpoSpeechRecognitionModule) {
       ExpoSpeechRecognitionModule.stop();
       if (mode === "hybrid") {
-        await stopHybridRecordingAndFinalize();
+        finalCount = await stopHybridRecordingAndFinalize();
       }
     } else if (mode === "cloud") {
       await stopCloudRecording();
@@ -932,7 +938,8 @@ export function useDaimokuRecognition(
     } else if (mode === "local") {
       await stopLocalRecognition();
     }
-  }, [mode, stopLocalRecognition, stopTimer, stopCloudRecording, stopWhisperRecording, stopHybridRecordingAndFinalize]);
+    return finalCount;
+  }, [count, mode, stopLocalRecognition, stopTimer, stopCloudRecording, stopWhisperRecording, stopHybridRecordingAndFinalize]);
 
   useEffect(() => {
     return () => {

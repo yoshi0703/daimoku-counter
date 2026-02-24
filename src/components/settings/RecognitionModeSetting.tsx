@@ -131,7 +131,7 @@ export function RecognitionModeSetting({
         </Text>
       ) : null}
       <Text style={styles.warning}>
-        初回のlocal実行時はWhisperモデルのダウンロードが発生します（オンライン必須）。
+        Whisperモデルはアプリに同梱されています。初回実行時の追加ダウンロードは不要です。
       </Text>
     </View>
   );
