@@ -8,70 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		36DF47D1B6AFC1FE56DA6673 /* libPods-app.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 602DA61437A47337164DFB0C /* libPods-app.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		4117DE736BDE45CC99E447C0 /* DaimokuActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A2C8E4931E94C1DB8DF67A2 /* DaimokuActivityAttributes.swift */; };
-		4BE2E226F654452E9A29420D /* DaimokuCounterWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CDFE9CF0ABC40D99A8A0707 /* DaimokuCounterWidget.swift */; };
-		876387E4F2164D5A9AB7B1B9 /* DaimokuWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 281989780F9743C18B9AED4A /* DaimokuWidgetExtension.appex */; };
-		87FDAA19E2414AAFAC3A3B95 /* DaimokuLiveActivityModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 5CD972F5EFC84F0B8E171415 /* DaimokuLiveActivityModule.m */; };
-		A42E26F3CBB947F08B0604BB /* DaimokuLiveActivityWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C20CDC99DF340098BBCFD92 /* DaimokuLiveActivityWidget.swift */; };
-		B40C3F9CCD704D3DAF03F53C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 74A9E80AA45D40E2A92AC906 /* PrivacyInfo.xcprivacy */; };
+		4908751C57FCE864A5DDF162 /* libPods-app.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7809F4F69C1EEDB44DDE090B /* libPods-app.a */; };
+		66D0954E2064FE3E0BE09D53 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878FDCC281846B29C6BC0C58 /* ExpoModulesProvider.swift */; };
+		897BC4D84392496EBB898285 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B75ECB48F9C94984BA1FBD94 /* PrivacyInfo.xcprivacy */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		CA5E5CCD1EEE4626A2387D90 /* DaimokuLiveActivityModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = D141D15A19B24BA2B2B3A43F /* DaimokuLiveActivityModule.swift */; };
-		CBF389CBE46F4951A4F4F2A2 /* DaimokuActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42B2823926B4F3885AB3191 /* DaimokuActivityAttributes.swift */; };
-		D9ECD460C93C1B47F5A07CA7 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00BC1B3B30B1CF517C6F49A2 /* ExpoModulesProvider.swift */; };
-		E19E803524BD492C81EB52D8 /* DaimokuWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF469F554B934433B380B5E8 /* DaimokuWidgetBundle.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		FFC80AD16855459281FADE7E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 357F788720DA43A0A111A44D;
-			remoteInfo = DaimokuWidgetExtension;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		B6D0795E0E074DC4A9A086C8 /* Embed App Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				876387E4F2164D5A9AB7B1B9 /* DaimokuWidgetExtension.appex in Embed App Extensions */,
-			);
-			name = "Embed App Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		00BC1B3B30B1CF517C6F49A2 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-app/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = app.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = app/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = app/Info.plist; sourceTree = "<group>"; };
-		1BC252F11C5542709949AB69 /* Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = DaimokuWidgetExtension/Info.plist; sourceTree = "<group>"; };
-		1CDFE9CF0ABC40D99A8A0707 /* DaimokuCounterWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuCounterWidget.swift; path = DaimokuWidgetExtension/DaimokuCounterWidget.swift; sourceTree = "<group>"; };
-		21F500166D1CA77BC99E063C /* Pods-app.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.release.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.release.xcconfig"; sourceTree = "<group>"; };
-		281989780F9743C18B9AED4A /* DaimokuWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = undefined; name = DaimokuWidgetExtension.appex; path = DaimokuWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		3C20CDC99DF340098BBCFD92 /* DaimokuLiveActivityWidget.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuLiveActivityWidget.swift; path = DaimokuWidgetExtension/DaimokuLiveActivityWidget.swift; sourceTree = "<group>"; };
-		5CD972F5EFC84F0B8E171415 /* DaimokuLiveActivityModule.m */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = DaimokuLiveActivityModule.m; path = app/DaimokuLiveActivityModule.m; sourceTree = "<group>"; };
-		602DA61437A47337164DFB0C /* libPods-app.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-app.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		74A9E80AA45D40E2A92AC906 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = app/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		8A2C8E4931E94C1DB8DF67A2 /* DaimokuActivityAttributes.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuActivityAttributes.swift; path = DaimokuWidgetExtension/DaimokuActivityAttributes.swift; sourceTree = "<group>"; };
-		9CF4708A82D84B74BB9EE6B4 /* DaimokuWidgetExtension.entitlements */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = DaimokuWidgetExtension.entitlements; path = DaimokuWidgetExtension/DaimokuWidgetExtension.entitlements; sourceTree = "<group>"; };
+		4147B02EC2FDB2178E6CD30C /* Pods-app.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.debug.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.debug.xcconfig"; sourceTree = "<group>"; };
+		6B2F9F2EDA48FE0345449B2B /* Pods-app.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.release.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.release.xcconfig"; sourceTree = "<group>"; };
+		7809F4F69C1EEDB44DDE090B /* libPods-app.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-app.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		878FDCC281846B29C6BC0C58 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-app/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = app/SplashScreen.storyboard; sourceTree = "<group>"; };
+		B75ECB48F9C94984BA1FBD94 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = PrivacyInfo.xcprivacy; path = app/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C42B2823926B4F3885AB3191 /* DaimokuActivityAttributes.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuActivityAttributes.swift; path = app/DaimokuActivityAttributes.swift; sourceTree = "<group>"; };
-		D141D15A19B24BA2B2B3A43F /* DaimokuLiveActivityModule.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuLiveActivityModule.swift; path = app/DaimokuLiveActivityModule.swift; sourceTree = "<group>"; };
-		E400169A41A76383A6423F6F /* Pods-app.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.debug.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = app/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* app-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "app-Bridging-Header.h"; path = "app/app-Bridging-Header.h"; sourceTree = "<group>"; };
-		FF469F554B934433B380B5E8 /* DaimokuWidgetBundle.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = DaimokuWidgetBundle.swift; path = DaimokuWidgetExtension/DaimokuWidgetBundle.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,14 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				36DF47D1B6AFC1FE56DA6673 /* libPods-app.a in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		27150E62D5344B33A59E5F09 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
+				4908751C57FCE864A5DDF162 /* libPods-app.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,10 +53,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				74A9E80AA45D40E2A92AC906 /* PrivacyInfo.xcprivacy */,
-				C42B2823926B4F3885AB3191 /* DaimokuActivityAttributes.swift */,
-				D141D15A19B24BA2B2B3A43F /* DaimokuLiveActivityModule.swift */,
-				5CD972F5EFC84F0B8E171415 /* DaimokuLiveActivityModule.m */,
+				B75ECB48F9C94984BA1FBD94 /* PrivacyInfo.xcprivacy */,
 			);
 			name = app;
 			sourceTree = "<group>";
@@ -114,19 +62,17 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				602DA61437A47337164DFB0C /* libPods-app.a */,
+				7809F4F69C1EEDB44DDE090B /* libPods-app.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		3A1CFB27E231C1699E69657D /* Pods */ = {
+		3045221C7D1FFD45867F76B8 /* app */ = {
 			isa = PBXGroup;
 			children = (
-				E400169A41A76383A6423F6F /* Pods-app.debug.xcconfig */,
-				21F500166D1CA77BC99E063C /* Pods-app.release.xcconfig */,
+				878FDCC281846B29C6BC0C58 /* ExpoModulesProvider.swift */,
 			);
-			name = Pods;
-			path = Pods;
+			name = app;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -143,9 +89,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				3A1CFB27E231C1699E69657D /* Pods */,
-				C148AE75F813B1172DA1AB15 /* ExpoModulesProviders */,
-				F33CD279A0FA483EB70DF283 /* DaimokuWidgetExtension */,
+				9B33348D3C5638FAB9522D03 /* Pods */,
+				ADC4D369EEFF2EECFE13FE9D /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -156,9 +101,26 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* app.app */,
-				281989780F9743C18B9AED4A /* DaimokuWidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		9B33348D3C5638FAB9522D03 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				4147B02EC2FDB2178E6CD30C /* Pods-app.debug.xcconfig */,
+				6B2F9F2EDA48FE0345449B2B /* Pods-app.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		ADC4D369EEFF2EECFE13FE9D /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				3045221C7D1FFD45867F76B8 /* app */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -170,35 +132,6 @@
 			path = app/Supporting;
 			sourceTree = "<group>";
 		};
-		C148AE75F813B1172DA1AB15 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				CA319E6B2C7934DB303AB751 /* app */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		CA319E6B2C7934DB303AB751 /* app */ = {
-			isa = PBXGroup;
-			children = (
-				00BC1B3B30B1CF517C6F49A2 /* ExpoModulesProvider.swift */,
-			);
-			name = app;
-			sourceTree = "<group>";
-		};
-		F33CD279A0FA483EB70DF283 /* DaimokuWidgetExtension */ = {
-			isa = PBXGroup;
-			children = (
-				FF469F554B934433B380B5E8 /* DaimokuWidgetBundle.swift */,
-				1CDFE9CF0ABC40D99A8A0707 /* DaimokuCounterWidget.swift */,
-				3C20CDC99DF340098BBCFD92 /* DaimokuLiveActivityWidget.swift */,
-				1BC252F11C5542709949AB69 /* Info.plist */,
-				9CF4708A82D84B74BB9EE6B4 /* DaimokuWidgetExtension.entitlements */,
-				8A2C8E4931E94C1DB8DF67A2 /* DaimokuActivityAttributes.swift */,
-			);
-			name = DaimokuWidgetExtension;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -207,41 +140,22 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "app" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				969C12993230CF6C3324025F /* [Expo] Configure project */,
+				7FC65C035144A8B840EA2B59 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				2C9FD219026D36DCDB43D096 /* [CP] Embed Pods Frameworks */,
-				B6D0795E0E074DC4A9A086C8 /* Embed App Extensions */,
+				6465D788E9D9BB43C1F290FA /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				000E423C691C483BB6F4429F /* PBXTargetDependency */,
 			);
 			name = app;
 			productName = app;
 			productReference = 13B07F961A680F5B00A75B9A /* app.app */;
 			productType = "com.apple.product-type.application";
-		};
-		357F788720DA43A0A111A44D /* DaimokuWidgetExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 0623233C6497418B9BD56DB0 /* Build configuration list for PBXNativeTarget "DaimokuWidgetExtension" */;
-			buildPhases = (
-				B1439C2E63184FC49AE8B819 /* Sources */,
-				27150E62D5344B33A59E5F09 /* Frameworks */,
-				0D07B5D150014D82B3CA05FB /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = DaimokuWidgetExtension;
-			productName = DaimokuWidgetExtension;
-			productReference = 281989780F9743C18B9AED4A /* DaimokuWidgetExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -270,19 +184,11 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* app */,
-				357F788720DA43A0A111A44D /* DaimokuWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		0D07B5D150014D82B3CA05FB /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		13B07F8E1A680F5B00A75B9A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -290,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				B40C3F9CCD704D3DAF03F53C /* PrivacyInfo.xcprivacy in Resources */,
+				897BC4D84392496EBB898285 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -336,7 +242,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		2C9FD219026D36DCDB43D096 /* [CP] Embed Pods Frameworks */ = {
+		6465D788E9D9BB43C1F290FA /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -360,45 +266,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-app/Pods-app-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-app/Pods-app-resources.sh",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
-				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevMenu.bundle",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-app/Pods-app-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		969C12993230CF6C3324025F /* [Expo] Configure project */ = {
+		7FC65C035144A8B840EA2B59 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -422,6 +290,40 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-app/expo-configure-project.sh\"\n";
 		};
+		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-app/Pods-app-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoSystemUI/ExpoSystemUI_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RNCAsyncStorage/RNCAsyncStorage_resources.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/RNSVG/RNSVGFilters.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-Core/React-Core_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/SDWebImage/SDWebImage.bundle",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoSystemUI_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNCAsyncStorage_resources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/RNSVGFilters.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-Core_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/SDWebImage.bundle",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-app/Pods-app-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -430,38 +332,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				D9ECD460C93C1B47F5A07CA7 /* ExpoModulesProvider.swift in Sources */,
-				CA5E5CCD1EEE4626A2387D90 /* DaimokuLiveActivityModule.swift in Sources */,
-				87FDAA19E2414AAFAC3A3B95 /* DaimokuLiveActivityModule.m in Sources */,
-				CBF389CBE46F4951A4F4F2A2 /* DaimokuActivityAttributes.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B1439C2E63184FC49AE8B819 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				4117DE736BDE45CC99E447C0 /* DaimokuActivityAttributes.swift in Sources */,
-				E19E803524BD492C81EB52D8 /* DaimokuWidgetBundle.swift in Sources */,
-				4BE2E226F654452E9A29420D /* DaimokuCounterWidget.swift in Sources */,
-				A42E26F3CBB947F08B0604BB /* DaimokuLiveActivityWidget.swift in Sources */,
+				66D0954E2064FE3E0BE09D53 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		000E423C691C483BB6F4429F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 357F788720DA43A0A111A44D /* DaimokuWidgetExtension */;
-			targetProxy = FFC80AD16855459281FADE7E /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E400169A41A76383A6423F6F /* Pods-app.debug.xcconfig */;
+			baseConfigurationReference = 4147B02EC2FDB2178E6CD30C /* Pods-app.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -497,7 +377,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 21F500166D1CA77BC99E063C /* Pods-app.release.xcconfig */;
+			baseConfigurationReference = 6B2F9F2EDA48FE0345449B2B /* Pods-app.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -524,54 +404,6 @@
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
-		};
-		1CF91AAC9719404EBFEDBADA /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = DaimokuWidgetExtension/DaimokuWidgetExtension.entitlements;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = DaimokuWidgetExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.yoshi0703.daimokucounter.widget;
-				PRODUCT_NAME = DaimokuWidgetExtension;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Release;
-		};
-		50DAC9AC9E7D48ABB4F3E134 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = DaimokuWidgetExtension/DaimokuWidgetExtension.entitlements;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = DaimokuWidgetExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.yoshi0703.daimokucounter.widget;
-				PRODUCT_NAME = DaimokuWidgetExtension;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Debug;
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -694,15 +526,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		0623233C6497418B9BD56DB0 /* Build configuration list for PBXNativeTarget "DaimokuWidgetExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				50DAC9AC9E7D48ABB4F3E134 /* Debug */,
-				1CF91AAC9719404EBFEDBADA /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "app" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
