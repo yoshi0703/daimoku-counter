@@ -168,6 +168,7 @@ export default function CounterScreen() {
   ]);
 
   const handleStart = useCallback(async () => {
+    if (isStopping) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     sessionStartedAtRef.current = new Date().toISOString();
     liveActivityPushTokenRef.current = null;
@@ -175,7 +176,7 @@ export default function CounterScreen() {
     liveActivityLastUpdateAtRef.current = 0;
     widgetLastSignatureRef.current = null;
     await start();
-  }, [start]);
+  }, [isStopping, start]);
 
   const handleTap = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -529,7 +530,7 @@ export default function CounterScreen() {
 
         <View style={styles.bottomSection}>
           <CounterControls
-            isSessionActive={isSessionActive}
+            isSessionActive={isSessionActive || isStopping}
             speechAvailable={usesSpeech}
             isStopping={isStopping}
             onStart={handleStart}
