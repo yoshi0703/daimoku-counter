@@ -1,5 +1,5 @@
 import { AppState, type AppStateStatus, View, Text, StyleSheet } from "react-native";
-import { useEffect, useCallback, useMemo, useRef } from "react";
+import { useEffect, useCallback, useMemo, useRef, useState } from "react";
 import { useKeepAwake } from "expo-keep-awake";
 import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -71,84 +71,92 @@ export default function CounterScreen() {
   const widgetLastSignatureRef = useRef<string | null>(null);
   const widgetLastSyncAtRef = useRef(0);
   const widgetSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isStopping, setIsStopping] = useState(false);
 
   useEffect(() => {
     fetchTodayTotal();
   }, [fetchTodayTotal]);
 
   const handleStop = useCallback(async () => {
-    const finalizedCount = await stop();
-    if (liveActivityUpdateTimerRef.current) {
-      clearTimeout(liveActivityUpdateTimerRef.current);
-      liveActivityUpdateTimerRef.current = null;
-    }
-    if (widgetSyncTimerRef.current) {
-      clearTimeout(widgetSyncTimerRef.current);
-      widgetSyncTimerRef.current = null;
-    }
+    if (isStopping) return;
+    setIsStopping(true);
+    try {
+      const finalizedCount = await stop();
+      if (liveActivityUpdateTimerRef.current) {
+        clearTimeout(liveActivityUpdateTimerRef.current);
+        liveActivityUpdateTimerRef.current = null;
+      }
+      if (widgetSyncTimerRef.current) {
+        clearTimeout(widgetSyncTimerRef.current);
+        widgetSyncTimerRef.current = null;
+      }
 
-    const liveActivityId = liveActivityIdRef.current;
-    const liveActivityPushToken = liveActivityPushTokenRef.current;
-    if (liveActivityPushToken) {
-      await relayLiveActivityPush({
-        pushToken: liveActivityPushToken,
-        event: "end",
-        contentState: {
+      const liveActivityId = liveActivityIdRef.current;
+      const liveActivityPushToken = liveActivityPushTokenRef.current;
+      if (liveActivityPushToken) {
+        await relayLiveActivityPush({
+          pushToken: liveActivityPushToken,
+          event: "end",
+          contentState: {
+            count: finalizedCount,
+            elapsedSeconds,
+            mode,
+            todayTotal: todayTotal + finalizedCount,
+          },
+          dismissalDate: Math.floor(Date.now() / 1000),
+        });
+      }
+
+      if (liveActivityId) {
+        await stopDaimokuLiveActivity(liveActivityId, {
           count: finalizedCount,
           elapsedSeconds,
           mode,
           todayTotal: todayTotal + finalizedCount,
-        },
-        dismissalDate: Math.floor(Date.now() / 1000),
-      });
-    }
+        });
+        liveActivityIdRef.current = null;
+      }
+      liveActivityPushTokenRef.current = null;
 
-    if (liveActivityId) {
-      await stopDaimokuLiveActivity(liveActivityId, {
-        count: finalizedCount,
-        elapsedSeconds,
+      liveActivityLastSignatureRef.current = null;
+      liveActivityLastUpdateAtRef.current = 0;
+
+      await syncDaimokuWidgetSnapshot({
+        count: 0,
+        elapsedSeconds: 0,
         mode,
         todayTotal: todayTotal + finalizedCount,
+        isRecording: false,
       });
-      liveActivityIdRef.current = null;
-    }
-    liveActivityPushTokenRef.current = null;
+      widgetLastSignatureRef.current = `0|${mode}|${todayTotal + finalizedCount}|0`;
+      widgetLastSyncAtRef.current = Date.now();
 
-    liveActivityLastSignatureRef.current = null;
-    liveActivityLastUpdateAtRef.current = 0;
+      sessionStartedAtRef.current = null;
 
-    await syncDaimokuWidgetSnapshot({
-      count: 0,
-      elapsedSeconds: 0,
-      mode,
-      todayTotal: todayTotal + finalizedCount,
-      isRecording: false,
-    });
-    widgetLastSignatureRef.current = `0|${mode}|${todayTotal + finalizedCount}|0`;
-    widgetLastSyncAtRef.current = Date.now();
+      const recordingUri = getLastRecordingUri();
+      if (finalizedCount > 0) {
+        await saveSession(finalizedCount, elapsedSeconds);
+        await fetchTodayTotal();
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-    sessionStartedAtRef.current = null;
-
-    const recordingUri = getLastRecordingUri();
-    if (finalizedCount > 0) {
-      await saveSession(finalizedCount, elapsedSeconds);
-      await fetchTodayTotal();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-      if (
-        audioContributionEnabled &&
-        recordingUri &&
-        (mode === "local" || mode === "whisper" || mode === "hybrid")
-      ) {
-        uploadAudioContribution({
-          uri: recordingUri,
-          durationSeconds: elapsedSeconds,
-          daimokuCount: finalizedCount,
-          recognitionMode: mode,
-        });
+        if (
+          audioContributionEnabled &&
+          recordingUri &&
+          (mode === "local" || mode === "whisper" || mode === "hybrid")
+        ) {
+          uploadAudioContribution({
+            uri: recordingUri,
+            durationSeconds: elapsedSeconds,
+            daimokuCount: finalizedCount,
+            recognitionMode: mode,
+          });
+        }
       }
+    } finally {
+      setIsStopping(false);
     }
   }, [
+    isStopping,
     stop,
     elapsedSeconds,
     mode,
@@ -479,6 +487,12 @@ export default function CounterScreen() {
           fontSize: FONT_SIZE.sm,
           color: colors.textSecondary,
         },
+        processingText: {
+          marginTop: SPACING.sm,
+          fontSize: FONT_SIZE.sm,
+          color: colors.textSecondary,
+          textAlign: "center",
+        },
       }),
     [colors],
   );
@@ -506,12 +520,18 @@ export default function CounterScreen() {
               </Text>
             </View>
           ) : null}
+          {isStopping ? (
+            <Text style={styles.processingText}>
+              データを処理中です。画面はそのままにしてください。
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.bottomSection}>
           <CounterControls
             isSessionActive={isSessionActive}
             speechAvailable={usesSpeech}
+            isStopping={isStopping}
             onStart={handleStart}
             onStop={handleStop}
             onTap={handleTap}
