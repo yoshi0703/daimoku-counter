@@ -1,7 +1,10 @@
 export const DAIMOKU_VARIANTS = [
   "南無妙法蓮華経",
+  "妙法蓮華経",
   "なむみょうほうれんげきょう",
+  "みょうほうれんげきょう",
   "ナムミョウホウレンゲキョウ",
+  "ミョウホウレンゲキョウ",
   "なむみょうほうれんげーきょう",
   "ナムミョウホウレンゲーキョウ",
   // Deepgram が返す可能性のあるバリエーション
@@ -73,7 +76,9 @@ export function countOccurrences(text: string): number {
   // 既知バリアントで拾えない軽微な誤認識を補足
   if (maxCount === 0) {
     const fuzzyPatterns = [
+      /妙法蓮華[経經教]/g,
       /南無妙法蓮華[経經教]/g,
+      /みょ[うー]?ほ[うー]?れんげきょ[うー]?/g,
       /な[んむも]?みょ[うー]?ほ[うー]?れんげきょ[うー]?/g,
     ];
     for (const pattern of fuzzyPatterns) {

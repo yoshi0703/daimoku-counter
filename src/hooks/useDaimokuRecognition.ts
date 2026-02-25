@@ -57,11 +57,11 @@ type RecognitionMode = "native" | "cloud" | "local" | "whisper" | "hybrid" | "ma
 // Expo Go 向けローカル推定モード（メータリングベース）
 // v2: 実録音(51回/60秒)で検証済みパラメータ — 高速唱題(~1.18s/cycle)対応
 const LOCAL_PROGRESS_UPDATE_MS = 120;
-const LOCAL_MIN_GAP_MS = 480;
-const LOCAL_MAX_GAP_MS = 1700;
-const LOCAL_THRESHOLD_OFFSET_DB = 2.0;   // 1.0→2.0: ノイズ耐性向上
-const LOCAL_THRESHOLD_FLOOR_DB = -35;    // -38→-35: 微弱ノイズ除外
-const LOCAL_PEAK_PROMINENCE_DB = 2.5;    // 0.30→2.5: 偽陽性の大幅削減
+const LOCAL_MIN_GAP_MS = 380;
+const LOCAL_MAX_GAP_MS = 1900;
+const LOCAL_THRESHOLD_OFFSET_DB = 1.2;
+const LOCAL_THRESHOLD_FLOOR_DB = -42;
+const LOCAL_PEAK_PROMINENCE_DB = 1.2;
 const HYBRID_PROGRESS_UPDATE_MS = 150;
 const HYBRID_MIN_SEGMENT_MS = 1800;
 const HYBRID_SILENCE_HOLD_MS = 900;
@@ -757,6 +757,37 @@ export function useDaimokuRecognition(
         const prevPrev = localPrevPrevDbRef.current;
         const prevTimeMs = localPrevSampleTimeMsRef.current;
 
+        const registerPulse = (
+          pulseAtMs: number,
+          levelDb: number,
+          reason: "peak" | "edge",
+        ) => {
+          const hasPrevPulse = localLastPulseAtMsRef.current > 0;
+          const gapMs = hasPrevPulse
+            ? pulseAtMs - localLastPulseAtMsRef.current
+            : Infinity;
+          const minGapMs = getAdaptiveMinGapMs();
+
+          if (gapMs < minGapMs) return;
+
+          if (hasPrevPulse && gapMs <= LOCAL_MAX_GAP_MS * 1.5) {
+            localRecentIntervalsRef.current.push(gapMs);
+            if (localRecentIntervalsRef.current.length > 12) {
+              localRecentIntervalsRef.current.shift();
+            }
+          }
+
+          localLastPulseAtMsRef.current = pulseAtMs;
+          setCount((prevCount) => prevCount + 1);
+
+          const gapLabel = Number.isFinite(gapMs)
+            ? `${(gapMs / 1000).toFixed(2)}s`
+            : "--";
+          setLastTranscript(
+            `[local/${reason}] +1 (gap ${gapLabel}, level ${levelDb.toFixed(1)}dB, thr ${thresholdDb.toFixed(1)}dB)`,
+          );
+        };
+
         if (prev != null && prevPrev != null && prevTimeMs != null) {
           const prominence = prev - Math.min(prevPrev, db);
           const isLocalPeak =
@@ -766,29 +797,13 @@ export function useDaimokuRecognition(
             prominence >= LOCAL_PEAK_PROMINENCE_DB;
 
           if (isLocalPeak) {
-            const hasPrevPulse = localLastPulseAtMsRef.current > 0;
-            const gapMs = hasPrevPulse
-              ? prevTimeMs - localLastPulseAtMsRef.current
-              : Infinity;
-            const minGapMs = getAdaptiveMinGapMs();
-
-            if (gapMs >= minGapMs) {
-              if (hasPrevPulse && gapMs <= LOCAL_MAX_GAP_MS * 1.5) {
-                localRecentIntervalsRef.current.push(gapMs);
-                if (localRecentIntervalsRef.current.length > 12) {
-                  localRecentIntervalsRef.current.shift();
-                }
-              }
-
-              localLastPulseAtMsRef.current = prevTimeMs;
-              setCount((prevCount) => prevCount + 1);
-
-              const gapLabel = Number.isFinite(gapMs)
-                ? `${(gapMs / 1000).toFixed(2)}s`
-                : "--";
-              setLastTranscript(
-                `[local] +1 (gap ${gapLabel}, peak ${prev.toFixed(1)}dB, thr ${thresholdDb.toFixed(1)}dB)`,
-              );
+            registerPulse(prevTimeMs, prev, "peak");
+          } else {
+            const isRisingEdge =
+              prev < thresholdDb - 0.8 &&
+              db >= thresholdDb + 0.8;
+            if (isRisingEdge) {
+              registerPulse(nowMs, db, "edge");
             }
           }
         }
@@ -956,6 +971,8 @@ export function useDaimokuRecognition(
     try {
       sessionActiveRef.current = false;
       setIsSessionActive(false);
+      setIsListening(false);
+      setLastTranscript("停止処理中...");
       stopTimer();
 
       if ((mode === "native" || mode === "hybrid") && ExpoSpeechRecognitionModule) {
