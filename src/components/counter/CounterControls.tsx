@@ -6,6 +6,7 @@ import { SPACING, TOUCH_TARGET, FONT_SIZE } from "@/src/constants/theme";
 interface Props {
   isSessionActive: boolean;
   speechAvailable: boolean;
+  isStopping?: boolean;
   onStart: () => void;
   onStop: () => void;
   onTap: () => void;
@@ -14,6 +15,7 @@ interface Props {
 export function CounterControls({
   isSessionActive,
   speechAvailable,
+  isStopping = false,
   onStart,
   onStop,
   onTap,
@@ -117,11 +119,13 @@ export function CounterControls({
             styles.button,
             styles.stopButton,
             pressed && styles.pressed,
+            isStopping && { opacity: 0.6 },
           ]}
           onPress={onStop}
+          disabled={isStopping}
         >
           <View style={styles.stopIcon} />
-          <Text style={styles.stopText}>停止する</Text>
+          <Text style={styles.stopText}>{isStopping ? "停止処理中..." : "停止する"}</Text>
         </Pressable>
       </View>
     );
