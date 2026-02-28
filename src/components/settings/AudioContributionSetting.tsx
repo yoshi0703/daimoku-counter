@@ -1,7 +1,7 @@
 import { View, Text, Switch, StyleSheet } from "react-native";
 import { useMemo } from "react";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { FONT_SIZE, SPACING } from "@/src/constants/theme";
+import { FONT_SIZE, SPACING, SHADOWS, BORDER_RADIUS } from "@/src/constants/theme";
 
 interface Props {
   enabled: boolean;
@@ -15,10 +15,11 @@ export function AudioContributionSetting({ enabled, onChange }: Props) {
     () =>
       StyleSheet.create({
         container: {
-          backgroundColor: colors.surface,
-          borderRadius: 12,
-          padding: SPACING.md,
+          backgroundColor: colors.cardBackground,
+          borderRadius: BORDER_RADIUS.lg,
+          padding: 20,
           gap: SPACING.sm,
+          ...SHADOWS.md,
         },
         title: {
           fontSize: FONT_SIZE.lg,
@@ -60,7 +61,7 @@ export function AudioContributionSetting({ enabled, onChange }: Props) {
         <Switch
           value={enabled}
           onValueChange={onChange}
-          trackColor={{ false: colors.border, true: colors.green }}
+          trackColor={{ false: colors.border, true: colors.primary }}
         />
       </View>
       <Text style={styles.privacy}>

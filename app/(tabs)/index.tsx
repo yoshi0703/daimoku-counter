@@ -1,6 +1,7 @@
 import { AppState, type AppStateStatus, View, Text, StyleSheet } from "react-native";
 import { useEffect, useCallback, useMemo, useRef, useState } from "react";
 import { useKeepAwake } from "expo-keep-awake";
+import { useFocusEffect } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -16,7 +17,7 @@ import { useGoal } from "@/src/hooks/useGoal";
 import { useStats } from "@/src/hooks/useStats";
 import { useApiKeys } from "@/src/hooks/useApiKeys";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { SPACING, FONT_SIZE } from "@/src/constants/theme";
+import { SPACING, FONT_SIZE, SHADOWS, BORDER_RADIUS } from "@/src/constants/theme";
 import {
   getDaimokuLiveActivityPushToken,
   startDaimokuLiveActivity,
@@ -58,7 +59,7 @@ export default function CounterScreen() {
   );
 
   const { saveSession } = useSessionManager();
-  const { goal } = useGoal();
+  const { goal, refreshGoal } = useGoal();
   const { todayTotal, fetchTodayTotal } = useStats();
   const liveActivityIdRef = useRef<string | null>(null);
   const liveActivityPushTokenRef = useRef<string | null>(null);
@@ -76,6 +77,15 @@ export default function CounterScreen() {
   useEffect(() => {
     fetchTodayTotal();
   }, [fetchTodayTotal]);
+
+  // Re-fetch goal & today total when counter tab gains focus
+  // (so changes made in settings are reflected immediately)
+  useFocusEffect(
+    useCallback(() => {
+      refreshGoal();
+      fetchTodayTotal();
+    }, [refreshGoal, fetchTodayTotal]),
+  );
 
   const handleStop = useCallback(async () => {
     if (isStopping) return;
@@ -185,6 +195,7 @@ export default function CounterScreen() {
 
   const displayTotal = todayTotal + (isSessionActive ? count : 0);
   const dailyTarget = goal?.daily_target ?? 100;
+
   const usesSpeech =
     mode === "native" ||
     mode === "cloud" ||
@@ -458,12 +469,12 @@ export default function CounterScreen() {
         content: {
           flex: 1,
           justifyContent: "space-between",
-          paddingHorizontal: SPACING.lg,
+          paddingHorizontal: 32,
           paddingBottom: SPACING.xl,
         },
         topSection: {
           alignItems: "center",
-          paddingTop: SPACING.xl,
+          paddingTop: 48,
         },
         centerSection: {
           alignItems: "center",
@@ -473,11 +484,12 @@ export default function CounterScreen() {
           paddingBottom: SPACING.md,
         },
         transcriptBox: {
-          backgroundColor: colors.surface,
-          borderRadius: 8,
+          backgroundColor: colors.cardBackground,
+          borderRadius: BORDER_RADIUS.md,
           padding: SPACING.sm,
           marginTop: SPACING.sm,
           width: "100%",
+          ...SHADOWS.sm,
         },
         transcriptLabel: {
           fontSize: 11,
@@ -491,7 +503,7 @@ export default function CounterScreen() {
         processingText: {
           marginTop: SPACING.sm,
           fontSize: FONT_SIZE.sm,
-          color: colors.textSecondary,
+          color: colors.primary,
           textAlign: "center",
         },
       }),

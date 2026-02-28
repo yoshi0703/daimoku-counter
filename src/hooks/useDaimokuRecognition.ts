@@ -150,6 +150,12 @@ export function useDaimokuRecognition(
     setCount(next);
   }, []);
 
+  const setCountValueNonDecreasing = useCallback((next: number) => {
+    const clamped = Math.max(latestCountRef.current, next);
+    latestCountRef.current = clamped;
+    setCount(clamped);
+  }, []);
+
   const incrementCountValue = useCallback((delta = 1) => {
     latestCountRef.current += delta;
     setCount(latestCountRef.current);
@@ -329,7 +335,7 @@ export function useDaimokuRecognition(
     const isFinal = event.isFinal;
     const newCount = counter.current.processResult(transcript, isFinal);
     nativeCountRef.current = newCount;
-    setCountValue(newCount);
+    setCountValueNonDecreasing(newCount + manualIncrementRef.current);
     setLastTranscript(transcript);
   });
 
@@ -438,8 +444,9 @@ export function useDaimokuRecognition(
         setLastTranscript("最後のチャンクを処理中...");
         await processChunk(uri);
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.warn("stopCloudRecording error:", err);
+      // Don't throw — just log so the stop flow continues
     }
     setIsListening(false);
   }, [processChunk, stopCloudRecordingInternal]);
@@ -517,8 +524,9 @@ export function useDaimokuRecognition(
         setLastTranscript("最後のWhisperチャンクを処理中...");
         await processWhisperChunk(uri);
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.warn("stopWhisperRecording error:", err);
+      // Don't throw — just log so the stop flow continues
     }
     setIsListening(false);
   }, [processWhisperChunk, stopCloudRecordingInternal]);
@@ -697,8 +705,9 @@ export function useDaimokuRecognition(
         if (uri) {
           void queueHybridWhisperChunk(uri);
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        console.warn("stopHybridRecordingAndFinalize error:", err);
+        // Don't throw — just log so the stop flow continues
       } finally {
         hybridRecordingRef.current = null;
       }
@@ -998,36 +1007,77 @@ export function useDaimokuRecognition(
   const stop = useCallback(async () => {
     if (stopInProgressRef.current) return latestCountRef.current;
     stopInProgressRef.current = true;
-    let finalCount = latestCountRef.current;
+    const floorCount =
+      mode === "native" || mode === "hybrid"
+        ? nativeCountRef.current + manualIncrementRef.current
+        : latestCountRef.current;
+    let finalCount = floorCount;
     try {
-      sessionActiveRef.current = false;
-      setIsSessionActive(false);
-      setIsListening(false);
       setLastTranscript("停止処理中...");
+      setIsListening(false);
       stopTimer();
 
       if ((mode === "native" || mode === "hybrid") && ExpoSpeechRecognitionModule) {
         ExpoSpeechRecognitionModule.stop();
         if (mode === "hybrid") {
+          sessionActiveRef.current = false;
+          setIsSessionActive(false);
           finalCount = await stopHybridRecordingAndFinalize();
+          finalCount = Math.max(floorCount, finalCount);
         } else {
-          finalCount = latestCountRef.current;
+          sessionActiveRef.current = false;
+          setIsSessionActive(false);
+          finalCount = Math.max(
+            floorCount,
+            nativeCountRef.current + manualIncrementRef.current,
+          );
         }
       } else if (mode === "cloud") {
+        // Clear chunk timer BEFORE marking session inactive
+        if (chunkTimerRef.current) {
+          clearTimeout(chunkTimerRef.current);
+          chunkTimerRef.current = null;
+        }
+        sessionActiveRef.current = false;
+        setIsSessionActive(false);
         await stopCloudRecording();
-        finalCount = latestCountRef.current;
+        finalCount = Math.max(floorCount, latestCountRef.current);
       } else if (mode === "whisper") {
+        if (chunkTimerRef.current) {
+          clearTimeout(chunkTimerRef.current);
+          chunkTimerRef.current = null;
+        }
+        sessionActiveRef.current = false;
+        setIsSessionActive(false);
         await stopWhisperRecording();
-        finalCount = latestCountRef.current;
+        finalCount = Math.max(floorCount, latestCountRef.current);
       } else if (mode === "local") {
+        sessionActiveRef.current = false;
+        setIsSessionActive(false);
         await stopLocalRecognition();
         finalCount = latestCountRef.current;
+      } else {
+        sessionActiveRef.current = false;
+        setIsSessionActive(false);
+        finalCount = latestCountRef.current;
       }
+
+      setCountValue(finalCount);
+      setLastTranscript(finalCount > 0 ? `${finalCount}遍 確定` : "");
+      return finalCount;
+    } catch (err) {
+      console.warn("stop() error:", err);
+      // Even on error, return the floor count so it's not lost
+      finalCount = Math.max(floorCount, latestCountRef.current);
+      setCountValue(finalCount);
+      return finalCount;
     } finally {
+      sessionActiveRef.current = false;
+      setIsSessionActive(false);
+      setIsListening(false);
       stopInProgressRef.current = false;
     }
-    return finalCount;
-  }, [mode, stopLocalRecognition, stopTimer, stopCloudRecording, stopWhisperRecording, stopHybridRecordingAndFinalize]);
+  }, [mode, stopLocalRecognition, stopTimer, stopCloudRecording, stopWhisperRecording, stopHybridRecordingAndFinalize, setCountValue]);
 
   useEffect(() => {
     return () => {

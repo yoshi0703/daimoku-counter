@@ -1,7 +1,7 @@
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
 import { useState, useEffect, useMemo } from "react";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { FONT_SIZE, SPACING, TOUCH_TARGET } from "@/src/constants/theme";
+import { FONT_SIZE, SPACING, TOUCH_TARGET, SHADOWS, BORDER_RADIUS } from "@/src/constants/theme";
 
 interface Props {
   deepgramKey: string | null;
@@ -50,9 +50,10 @@ export function ApiKeySettings({
     () =>
       StyleSheet.create({
         container: {
-          backgroundColor: colors.surface,
-          borderRadius: 12,
-          padding: SPACING.md,
+          backgroundColor: colors.cardBackground,
+          borderRadius: BORDER_RADIUS.lg,
+          padding: 20,
+          ...SHADOWS.md,
         },
         title: {
           fontSize: FONT_SIZE.lg,
@@ -92,7 +93,7 @@ export function ApiKeySettings({
         },
         saveButton: {
           height: TOUCH_TARGET.minimum,
-          backgroundColor: colors.text,
+          backgroundColor: colors.primary,
           borderRadius: 8,
           justifyContent: "center",
           alignItems: "center",
@@ -116,7 +117,7 @@ export function ApiKeySettings({
           fontSize: 12,
         },
         statusOk: {
-          color: colors.green,
+          color: colors.primary,
         },
         statusNg: {
           color: colors.textTertiary,
@@ -147,7 +148,7 @@ export function ApiKeySettings({
           style={styles.input}
           value={dgInput}
           onChangeText={setDgInput}
-          placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          placeholder="APIキーを入力"
           placeholderTextColor={colors.textTertiary}
           autoCapitalize="none"
           autoCorrect={false}
@@ -165,7 +166,7 @@ export function ApiKeySettings({
           style={styles.input}
           value={oaInput}
           onChangeText={setOaInput}
-          placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          placeholder="APIキーを入力"
           placeholderTextColor={colors.textTertiary}
           autoCapitalize="none"
           autoCorrect={false}

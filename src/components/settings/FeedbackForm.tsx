@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { View, Text, Pressable, TextInput, StyleSheet, Platform } from "react-native";
 import Constants from "expo-constants";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { FONT_SIZE, SPACING, TOUCH_TARGET } from "@/src/constants/theme";
+import { FONT_SIZE, SPACING, TOUCH_TARGET, SHADOWS, BORDER_RADIUS } from "@/src/constants/theme";
 import { supabase } from "@/src/lib/supabase";
 
 type FeedbackType = "improvement" | "bug" | "inquiry";
@@ -72,10 +72,11 @@ export function FeedbackForm() {
     () =>
       StyleSheet.create({
         container: {
-          backgroundColor: colors.surface,
-          borderRadius: 12,
-          padding: SPACING.md,
+          backgroundColor: colors.cardBackground,
+          borderRadius: BORDER_RADIUS.lg,
+          padding: 20,
           gap: SPACING.sm,
+          ...SHADOWS.md,
         },
         title: {
           fontSize: FONT_SIZE.lg,
@@ -102,8 +103,8 @@ export function FeedbackForm() {
           justifyContent: "center",
         },
         typeChipActive: {
-          borderColor: colors.text,
-          backgroundColor: colors.text,
+          borderColor: colors.primary,
+          backgroundColor: colors.primary,
         },
         typeText: {
           fontSize: FONT_SIZE.sm,
@@ -144,7 +145,7 @@ export function FeedbackForm() {
           borderRadius: 8,
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: colors.text,
+          backgroundColor: colors.primary,
         },
         pressed: {
           opacity: 0.85,

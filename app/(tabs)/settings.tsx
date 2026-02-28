@@ -10,7 +10,7 @@ import { AudioContributionSetting } from "@/src/components/settings/AudioContrib
 import { useGoal } from "@/src/hooks/useGoal";
 import { useApiKeys } from "@/src/hooks/useApiKeys";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { FONT_SIZE, SPACING } from "@/src/constants/theme";
+import { FONT_SIZE, SPACING, SHADOWS, BORDER_RADIUS } from "@/src/constants/theme";
 
 export default function SettingsScreen() {
   const { colors } = useTheme();
@@ -39,14 +39,15 @@ export default function SettingsScreen() {
           flex: 1,
         },
         content: {
-          padding: SPACING.lg,
-          gap: SPACING.lg,
+          padding: 28,
+          gap: 28,
         },
         about: {
-          backgroundColor: colors.surface,
-          borderRadius: 12,
+          backgroundColor: colors.cardBackground,
+          borderRadius: BORDER_RADIUS.lg,
           padding: SPACING.lg,
           alignItems: "center",
+          ...SHADOWS.md,
         },
         aboutTitle: {
           fontSize: FONT_SIZE.lg,
@@ -81,23 +82,25 @@ export default function SettingsScreen() {
           onUpdate={updateGoal}
         />
 
-        <RecognitionModeSetting
+        {/* RecognitionModeSetting — 現在ローカルモード固定のため非表示 */}
+        {/* <RecognitionModeSetting
           mode={recognitionMode}
           cloudConfigured={cloudConfigured}
           onChange={saveRecognitionMode}
-        />
+        /> */}
 
         <AudioContributionSetting
           enabled={audioContributionEnabled}
           onChange={saveAudioContribution}
         />
 
-        <ApiKeySettings
+        {/* ApiKeySettings — ローカルモード固定のため非表示 */}
+        {/* <ApiKeySettings
           deepgramKey={deepgramKey}
           openaiKey={openaiKey}
           onSaveDeepgram={saveDeepgramKey}
           onSaveOpenai={saveOpenaiKey}
-        />
+        /> */}
 
         <FeedbackForm />
 
@@ -107,7 +110,7 @@ export default function SettingsScreen() {
             音声認識で「南無妙法蓮華経」を{"\n"}
             リアルタイムにカウントします。
           </Text>
-          <Text style={styles.version}>v1.0.0</Text>
+          <Text style={styles.version}>v2.0.0</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

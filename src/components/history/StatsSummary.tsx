@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from "react-native";
 import { useMemo } from "react";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { FONT_SIZE, SPACING } from "@/src/constants/theme";
+import { FONT_SIZE, SPACING, SHADOWS, BORDER_RADIUS } from "@/src/constants/theme";
 import type { DailyRecord } from "@/src/types";
 
 interface Props {
@@ -43,15 +43,16 @@ export function StatsSummary({ records }: Props) {
         },
         card: {
           flex: 1,
-          backgroundColor: colors.surface,
-          borderRadius: 12,
-          padding: SPACING.md,
+          backgroundColor: colors.cardBackground,
+          borderRadius: BORDER_RADIUS.lg,
+          padding: 20,
           alignItems: "center",
+          ...SHADOWS.sm,
         },
         value: {
           fontSize: FONT_SIZE.xl,
           fontWeight: "600",
-          color: colors.text,
+          color: colors.primary,
         },
         label: {
           fontSize: FONT_SIZE.xs,

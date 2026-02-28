@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from "react-native";
 import { useMemo } from "react";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { FONT_SIZE, SPACING } from "@/src/constants/theme";
+import { FONT_SIZE, SPACING, SHADOWS, BORDER_RADIUS } from "@/src/constants/theme";
 import type { DailyRecord } from "@/src/types";
 
 interface Props {
@@ -33,9 +33,10 @@ export function DailyChart({ records }: Props) {
     () =>
       StyleSheet.create({
         container: {
-          backgroundColor: colors.surface,
-          borderRadius: 12,
-          padding: SPACING.md,
+          backgroundColor: colors.cardBackground,
+          borderRadius: BORDER_RADIUS.lg,
+          padding: 20,
+          ...SHADOWS.md,
         },
         title: {
           fontSize: FONT_SIZE.sm,
@@ -99,7 +100,7 @@ export function DailyChart({ records }: Props) {
                     styles.bar,
                     {
                       height: Math.max(height, 2),
-                      backgroundColor: isToday ? colors.text : colors.border,
+                      backgroundColor: isToday ? colors.primary : colors.primaryLight,
                     },
                   ]}
                 />

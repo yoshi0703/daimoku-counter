@@ -32,7 +32,7 @@ function SessionItem({ item, colors }: { item: Session; colors: Colors }) {
         count: {
           fontSize: FONT_SIZE.lg,
           fontWeight: "600",
-          color: colors.text,
+          color: colors.primary,
         },
       }),
     [colors],

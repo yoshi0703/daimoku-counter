@@ -48,8 +48,8 @@ export default function HistoryScreen() {
           flex: 1,
         },
         content: {
-          padding: SPACING.lg,
-          gap: SPACING.lg,
+          padding: 28,
+          gap: 28,
           paddingBottom: SPACING.xxl,
         },
       }),
