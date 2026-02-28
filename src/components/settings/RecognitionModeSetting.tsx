@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useMemo } from "react";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { FONT_SIZE, SPACING, TOUCH_TARGET } from "@/src/constants/theme";
+import { FONT_SIZE, SPACING, TOUCH_TARGET, SHADOWS, BORDER_RADIUS } from "@/src/constants/theme";
 import type { RecognitionModePreference } from "@/src/hooks/useApiKeys";
 
 interface Props {
@@ -21,10 +21,11 @@ export function RecognitionModeSetting({
     () =>
       StyleSheet.create({
         container: {
-          backgroundColor: colors.surface,
-          borderRadius: 12,
-          padding: SPACING.md,
+          backgroundColor: colors.cardBackground,
+          borderRadius: BORDER_RADIUS.lg,
+          padding: 20,
           gap: SPACING.sm,
+          ...SHADOWS.md,
         },
         title: {
           fontSize: FONT_SIZE.lg,
@@ -54,8 +55,8 @@ export function RecognitionModeSetting({
           paddingVertical: SPACING.sm,
         },
         optionActive: {
-          backgroundColor: colors.text,
-          borderColor: colors.text,
+          backgroundColor: colors.primary,
+          borderColor: colors.primary,
         },
         optionText: {
           color: colors.text,

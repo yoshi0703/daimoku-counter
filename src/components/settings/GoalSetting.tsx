@@ -1,7 +1,7 @@
 import { View, Text, Pressable, TextInput, StyleSheet } from "react-native";
 import { useMemo, useState } from "react";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { FONT_SIZE, SPACING, TOUCH_TARGET } from "@/src/constants/theme";
+import { FONT_SIZE, SPACING, TOUCH_TARGET, SHADOWS, BORDER_RADIUS } from "@/src/constants/theme";
 
 interface Props {
   currentTarget: number;
@@ -33,9 +33,10 @@ export function GoalSetting({ currentTarget, onUpdate }: Props) {
     () =>
       StyleSheet.create({
         container: {
-          backgroundColor: colors.surface,
-          borderRadius: 12,
-          padding: SPACING.md,
+          backgroundColor: colors.cardBackground,
+          borderRadius: BORDER_RADIUS.lg,
+          padding: 20,
+          ...SHADOWS.md,
         },
         title: {
           fontSize: FONT_SIZE.lg,
@@ -63,8 +64,8 @@ export function GoalSetting({ currentTarget, onUpdate }: Props) {
           justifyContent: "center",
         },
         presetActive: {
-          backgroundColor: colors.text,
-          borderColor: colors.text,
+          backgroundColor: colors.primary,
+          borderColor: colors.primary,
         },
         presetText: {
           fontSize: FONT_SIZE.sm,
@@ -91,7 +92,7 @@ export function GoalSetting({ currentTarget, onUpdate }: Props) {
         submitButton: {
           height: TOUCH_TARGET.minimum,
           paddingHorizontal: SPACING.lg,
-          backgroundColor: colors.text,
+          backgroundColor: colors.primary,
           borderRadius: 8,
           justifyContent: "center",
         },
@@ -152,7 +153,7 @@ export function GoalSetting({ currentTarget, onUpdate }: Props) {
             style={styles.input}
             value={customValue}
             onChangeText={setCustomValue}
-            placeholder="100"
+            placeholder="例: 100"
             placeholderTextColor={colors.textTertiary}
             keyboardType="number-pad"
             keyboardAppearance={isDark ? "dark" : "light"}

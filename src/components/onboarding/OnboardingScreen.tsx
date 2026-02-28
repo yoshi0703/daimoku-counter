@@ -157,11 +157,9 @@ function ProgressRingVisual({ color, trackColor }: { color: string; trackColor: 
 function PulseButton({
   onPress,
   color,
-  textColor,
 }: {
   onPress: () => void;
   color: string;
-  textColor: string;
 }) {
   const pulseScale = useSharedValue(1);
 
@@ -189,24 +187,29 @@ function PulseButton({
         onPress={onPress}
         style={({ pressed }) => [
           {
-            backgroundColor: color,
-            paddingHorizontal: 48,
-            paddingVertical: 18,
-            borderRadius: 30,
             opacity: pressed ? 0.85 : 1,
           },
         ]}
       >
-        <Text
+        <View
           style={{
-            color: textColor,
-            fontSize: FONT_SIZE.lg,
-            fontWeight: "700",
-            textAlign: "center",
+            backgroundColor: color,
+            paddingHorizontal: 48,
+            paddingVertical: 18,
+            borderRadius: 30,
           }}
         >
-          はじめる
-        </Text>
+          <Text
+            style={{
+              color: "#FFFFFF",
+              fontSize: FONT_SIZE.lg,
+              fontWeight: "700",
+              textAlign: "center",
+            }}
+          >
+            はじめる
+          </Text>
+        </View>
       </Pressable>
     </Animated.View>
   );
@@ -283,10 +286,10 @@ export function OnboardingScreen({ onComplete }: Props) {
           width: 120,
           height: 120,
           borderRadius: 60,
-          backgroundColor: colors.surface,
           alignItems: "center",
           justifyContent: "center",
           marginBottom: SPACING.lg,
+          overflow: "hidden" as const,
         },
         headline: {
           fontSize: 28,
@@ -336,9 +339,13 @@ export function OnboardingScreen({ onComplete }: Props) {
             entering={ZoomIn.duration(600).springify()}
             style={styles.iconContainer}
           >
-            <Ionicons name="mic" size={48} color={colors.blue} />
+            <View
+              style={{ width: 120, height: 120, borderRadius: 60, alignItems: "center", justifyContent: "center", backgroundColor: colors.primaryLight }}
+            >
+              <Ionicons name="mic" size={48} color={colors.primary} />
+            </View>
           </Animated.View>
-          <WaveformVisual color={colors.blue} />
+          <WaveformVisual color={colors.primary} />
           <View style={{ height: SPACING.xl }} />
           <Animated.Text
             entering={FadeInDown.delay(200).duration(600)}
@@ -363,10 +370,14 @@ export function OnboardingScreen({ onComplete }: Props) {
                 entering={ZoomIn.duration(600).springify()}
                 style={styles.iconContainer}
               >
-                <Ionicons name="bar-chart" size={48} color={colors.green} />
+                <View
+                  style={{ width: 120, height: 120, borderRadius: 60, alignItems: "center", justifyContent: "center", backgroundColor: colors.primaryLight }}
+                >
+                  <Ionicons name="bar-chart" size={48} color={colors.primary} />
+                </View>
               </Animated.View>
               <ProgressRingVisual
-                color={colors.green}
+                color={colors.primary}
                 trackColor={colors.border}
               />
               <View style={{ height: SPACING.xl }} />
@@ -394,7 +405,11 @@ export function OnboardingScreen({ onComplete }: Props) {
                 entering={ZoomIn.duration(600).springify()}
                 style={styles.iconContainer}
               >
-                <Ionicons name="heart" size={48} color={colors.orange} />
+                <View
+                  style={{ width: 120, height: 120, borderRadius: 60, alignItems: "center", justifyContent: "center", backgroundColor: colors.primaryLight }}
+                >
+                  <Ionicons name="heart" size={48} color={colors.primary} />
+                </View>
               </Animated.View>
               <View style={{ height: SPACING.xl }} />
               <Animated.Text
@@ -412,8 +427,7 @@ export function OnboardingScreen({ onComplete }: Props) {
               <View style={{ height: SPACING.xl }} />
               <PulseButton
                 onPress={handleComplete}
-                color={colors.text}
-                textColor={colors.background}
+                color={colors.primary}
               />
             </>
           )}
@@ -424,7 +438,7 @@ export function OnboardingScreen({ onComplete }: Props) {
         <PageIndicator
           total={3}
           current={currentPage}
-          activeColor={colors.text}
+          activeColor={colors.primary}
           inactiveColor={colors.border}
         />
         {currentPage < 2 && (

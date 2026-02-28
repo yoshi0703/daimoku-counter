@@ -15,7 +15,7 @@ export function SessionTimer({ elapsedSeconds }: Props) {
     () =>
       StyleSheet.create({
         timer: {
-          fontSize: FONT_SIZE.xl,
+          fontSize: 20,
           fontVariant: ["tabular-nums"],
           color: colors.textSecondary,
           fontWeight: "300",

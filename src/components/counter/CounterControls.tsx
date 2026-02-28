@@ -1,7 +1,7 @@
 import { View, Pressable, Text, StyleSheet } from "react-native";
 import { useMemo } from "react";
 import { useTheme } from "@/src/contexts/ThemeContext";
-import { SPACING, TOUCH_TARGET, FONT_SIZE } from "@/src/constants/theme";
+import { SPACING, TOUCH_TARGET, FONT_SIZE, SHADOWS } from "@/src/constants/theme";
 
 interface Props {
   isSessionActive: boolean;
@@ -28,7 +28,7 @@ export function CounterControls({
         container: {
           alignItems: "center",
           paddingHorizontal: SPACING.xl,
-          gap: SPACING.md,
+          gap: 20,
         },
         button: {
           flexDirection: "row",
@@ -36,7 +36,7 @@ export function CounterControls({
           justifyContent: "center",
           width: "100%",
           height: TOUCH_TARGET.recommended + 8,
-          borderRadius: (TOUCH_TARGET.recommended + 8) / 2,
+          borderRadius: 28,
           gap: SPACING.sm,
         },
         pressed: {
@@ -44,18 +44,28 @@ export function CounterControls({
           transform: [{ scale: 0.98 }],
         },
         startButton: {
-          backgroundColor: colors.text,
+          overflow: "hidden",
+          borderRadius: 28,
+          width: "100%",
+        },
+        gradientButton: {
+          backgroundColor: colors.primary,
+          height: 56,
+          borderRadius: 28,
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
         },
         stopButton: {
           backgroundColor: colors.red,
+          borderRadius: 28,
         },
         tapButton: {
           backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
+          ...SHADOWS.md,
           flexDirection: "column",
           height: TOUCH_TARGET.recommended + 40,
-          borderRadius: 16,
+          borderRadius: 20,
           gap: SPACING.xs,
         },
         tapPressed: {
@@ -64,8 +74,8 @@ export function CounterControls({
           backgroundColor: colors.border,
         },
         startText: {
-          color: colors.background,
-          fontSize: FONT_SIZE.lg,
+          color: "#FFFFFF",
+          fontSize: 18,
           fontWeight: "600",
         },
         stopText: {
@@ -134,16 +144,14 @@ export function CounterControls({
   return (
     <View style={styles.container}>
       <Pressable
-        style={({ pressed }) => [
-          styles.button,
-          styles.startButton,
-          pressed && styles.pressed,
-        ]}
         onPress={onStart}
+        style={({ pressed }) => [styles.startButton, pressed && styles.pressed]}
       >
-        <Text style={styles.startText}>
-          {speechAvailable ? "唱題を始める" : "カウントを始める"}
-        </Text>
+        <View style={styles.gradientButton}>
+          <Text style={styles.startText}>
+            {speechAvailable ? "唱題を始める" : "カウントを始める"}
+          </Text>
+        </View>
       </Pressable>
       {!speechAvailable && (
         <Text style={styles.modeHint}>

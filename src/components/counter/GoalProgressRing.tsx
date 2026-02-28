@@ -9,8 +9,8 @@ interface Props {
   target: number;
 }
 
-const SIZE = 120;
-const STROKE_WIDTH = 6;
+const SIZE = 140;
+const STROKE_WIDTH = 5;
 const RADIUS = (SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
@@ -19,7 +19,7 @@ export function GoalProgressRing({ current, target }: Props) {
   const progress = Math.min(current / Math.max(target, 1), 1);
   const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
   const isComplete = current >= target;
-  const progressColor = isComplete ? colors.green : colors.text;
+  const progressColor = isComplete ? colors.green : colors.primary;
 
   const styles = useMemo(
     () =>
@@ -40,7 +40,7 @@ export function GoalProgressRing({ current, target }: Props) {
         percentage: {
           fontSize: FONT_SIZE.lg,
           fontWeight: "600",
-          color: colors.text,
+          color: colors.primary,
         },
         targetLabel: {
           fontSize: FONT_SIZE.xs,
@@ -58,7 +58,7 @@ export function GoalProgressRing({ current, target }: Props) {
           cx={SIZE / 2}
           cy={SIZE / 2}
           r={RADIUS}
-          stroke={colors.border}
+          stroke={colors.primaryLight}
           strokeWidth={STROKE_WIDTH}
           fill="none"
         />
