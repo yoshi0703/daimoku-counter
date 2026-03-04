@@ -50,7 +50,7 @@ export function FeedbackForm() {
       if (insertError) {
         setStatus("error");
         setError(
-          "送信に失敗しました。設定されたSupabaseテーブルとRLSを確認してください。",
+          "送信に失敗しました。しばらくしてからもう一度お試しください。",
         );
         return;
       }
@@ -254,7 +254,7 @@ export function FeedbackForm() {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Text style={styles.note}>
-        送信内容は Supabase の `daimoku_feedback` テーブルに保存されます。
+        送信内容は安全に保存されます。
       </Text>
     </View>
   );

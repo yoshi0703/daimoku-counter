@@ -68,6 +68,24 @@ const HYBRID_SILENCE_HOLD_MS = 900;
 const HYBRID_SPEECH_MARGIN_DB = 6;
 const HYBRID_NOISE_FLOOR_DB = -42;
 
+/** Whisper最適化録音プリセット: 16kHz mono（Whisperの入力仕様に合わせてリサンプルを省略） */
+const WHISPER_OPTIMIZED_RECORDING = {
+  ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+  isMeteringEnabled: true,
+  ios: {
+    ...Audio.RecordingOptionsPresets.HIGH_QUALITY.ios,
+    sampleRate: 16000,
+    numberOfChannels: 1,
+    bitRate: 64000,
+  },
+  android: {
+    ...Audio.RecordingOptionsPresets.HIGH_QUALITY.android,
+    sampleRate: 16000,
+    numberOfChannels: 1,
+    bitRate: 64000,
+  },
+};
+
 /** ハイブリッドモード用AudioSession設定（expo-speech-recognitionのiosCategoryと整合） */
 const HYBRID_AUDIO_MODE = {
   allowsRecordingIOS: true,
@@ -123,6 +141,7 @@ export function useDaimokuRecognition(
   const hybridWhisperCountRef = useRef(0);
   const hybridWhisperChunksRef = useRef(0);
   const hybridWhisperQueueRef = useRef(Promise.resolve());
+  const hybridDeferredUrisRef = useRef<string[]>([]);
   const manualIncrementRef = useRef(0);
   const consecutiveErrorsRef = useRef(0);
   const stopInProgressRef = useRef(false);
@@ -470,8 +489,8 @@ export function useDaimokuRecognition(
       return;
     }
 
-    setError(result.error ?? "Whisper文字起こしエラー");
-    setLastTranscript(`Whisperエラー: ${result.error}`);
+    setError(result.error ?? "音声検証エラー");
+    setLastTranscript(`検証エラー: ${result.error}`);
   }, []);
 
   const startWhisperChunk = useCallback(async () => {
@@ -519,6 +538,7 @@ export function useDaimokuRecognition(
 
     try {
       const uri = await stopCloudRecordingInternal();
+      lastRecordingUriRef.current = uri ?? null;
 
       if (uri) {
         setLastTranscript("最後のWhisperチャンクを処理中...");
@@ -545,13 +565,13 @@ export function useDaimokuRecognition(
               : "[hybrid/whisper] (無音)",
           );
         } else {
-          setError(result.error ?? "Whisper文字起こしエラー");
-          setLastTranscript(`Whisperエラー: ${result.error}`);
+          setError(result.error ?? "音声検証エラー");
+          setLastTranscript(`検証エラー: ${result.error}`);
         }
       })
       .catch((e: any) => {
-        setError(`Whisperキュー処理エラー: ${e?.message ?? "unknown"}`);
-        setLastTranscript("Whisperキュー処理で想定外エラーが発生しました");
+        setError(`音声検証エラー: ${e?.message ?? "unknown"}`);
+        setLastTranscript("音声検証で想定外エラーが発生しました");
       })
       .finally(async () => {
         try {
@@ -581,16 +601,13 @@ export function useDaimokuRecognition(
       await current.stopAndUnloadAsync();
       const uri = current.getURI();
       if (uri) {
-        void queueHybridWhisperChunk(uri);
+        hybridDeferredUrisRef.current.push(uri);
       }
 
       if (!sessionActiveRef.current) return;
 
       const next = new Audio.Recording();
-      await next.prepareToRecordAsync({
-        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
-        isMeteringEnabled: true,
-      });
+      await next.prepareToRecordAsync(WHISPER_OPTIMIZED_RECORDING);
       if (!sessionActiveRef.current) {
         await next.stopAndUnloadAsync().catch(() => {});
         return;
@@ -639,7 +656,7 @@ export function useDaimokuRecognition(
     } finally {
       hybridSplittingRef.current = false;
     }
-  }, [queueHybridWhisperChunk]);
+  }, []);
 
   const startHybridRecording = useCallback(async () => {
     try {
@@ -648,10 +665,7 @@ export function useDaimokuRecognition(
       resetHybridSegmentationState();
 
       const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync({
-        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
-        isMeteringEnabled: true,
-      });
+      await recording.prepareToRecordAsync(WHISPER_OPTIMIZED_RECORDING);
       recording.setProgressUpdateInterval(HYBRID_PROGRESS_UPDATE_MS);
       recording.setOnRecordingStatusUpdate((status) => {
         if (!sessionActiveRef.current || !status.isRecording) return;
@@ -702,8 +716,9 @@ export function useDaimokuRecognition(
         recording.setOnRecordingStatusUpdate(null);
         await recording.stopAndUnloadAsync();
         const uri = recording.getURI();
+        lastRecordingUriRef.current = uri ?? null;
         if (uri) {
-          void queueHybridWhisperChunk(uri);
+          hybridDeferredUrisRef.current.push(uri);
         }
       } catch (err) {
         console.warn("stopHybridRecordingAndFinalize error:", err);
@@ -713,21 +728,49 @@ export function useDaimokuRecognition(
       }
     }
 
-    setLastTranscript("正確なカウントを処理中です。アプリを閉じないでください。");
-    await hybridWhisperQueueRef.current;
+    // セッション中に溜めた録音セグメントをまとめてWhisperで検証
+    const deferredUris = hybridDeferredUrisRef.current;
+    hybridDeferredUrisRef.current = [];
+
+    if (deferredUris.length > 0) {
+      setLastTranscript(
+        `正確なカウントを検証中です（${deferredUris.length}セグメント）。アプリを閉じないでください。`,
+      );
+      for (const uri of deferredUris) {
+        try {
+          const result = await transcribeWithLocalWhisper(uri);
+          if (result.success) {
+            const chunkCount = countOccurrences(result.transcript);
+            hybridWhisperChunksRef.current += 1;
+            hybridWhisperCountRef.current += chunkCount;
+            setLastTranscript(
+              `検証中... ${hybridWhisperChunksRef.current}/${deferredUris.length} (${hybridWhisperCountRef.current}遍)`,
+            );
+          }
+        } catch (e: any) {
+          console.warn("Deferred whisper chunk error:", e);
+        } finally {
+          try {
+            await FileSystem.deleteAsync(uri, { idempotent: true });
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
 
     const baseCount =
       hybridWhisperChunksRef.current > 0
-        ? hybridWhisperCountRef.current
+        ? Math.max(hybridWhisperCountRef.current, nativeCountRef.current)
         : nativeCountRef.current;
     const finalCount = baseCount + manualIncrementRef.current;
     setCountValue(finalCount);
     setLastTranscript(
-      `確定: ${finalCount}回 (リアルタイム:${nativeCountRef.current} / Whisper:${hybridWhisperCountRef.current} / 手動:${manualIncrementRef.current})`,
+      `確定: ${finalCount}遍 (リアルタイム:${nativeCountRef.current} / 検証:${hybridWhisperCountRef.current} / 手動:${manualIncrementRef.current})`,
     );
     setIsListening(false);
     return finalCount;
-  }, [queueHybridWhisperChunk, waitForHybridSplitSettle]);
+  }, [waitForHybridSplitSettle]);
 
   // ===== ローカル推定音声認識 (Expo Go 向け) =====
   const getLocalThresholdDb = useCallback(() => {
@@ -942,14 +985,14 @@ export function useDaimokuRecognition(
 
     if (mode === "whisper" || mode === "hybrid") {
       setError(null);
-      setLastTranscript("Whisperモデルを準備中...");
+      setLastTranscript("音声認識モデルを準備中...");
       const warmupResult = await warmupLocalWhisper();
       if (!warmupResult.success) {
-        setError(`Whisper準備エラー: ${warmupResult.error}`);
+        setError(`音声認識の準備エラー: ${warmupResult.error}`);
         return;
       }
       if (warmupResult.downloaded) {
-        setLastTranscript("Whisperモデルの準備が完了しました。録音を開始します...");
+        setLastTranscript("音声認識モデルの準備が完了しました。録音を開始します...");
       }
     }
 
@@ -961,6 +1004,7 @@ export function useDaimokuRecognition(
     hybridWhisperCountRef.current = 0;
     hybridWhisperChunksRef.current = 0;
     hybridWhisperQueueRef.current = Promise.resolve();
+    hybridDeferredUrisRef.current = [];
     manualIncrementRef.current = 0;
     lastRecordingUriRef.current = null;
     setCountValue(0);
@@ -974,7 +1018,7 @@ export function useDaimokuRecognition(
     if (mode === "native") {
       startRecognition();
     } else if (mode === "hybrid") {
-      setLastTranscript("リアルタイム認識を開始し、無音区間ごとにWhisperで検証します...");
+      setLastTranscript("リアルタイム認識を開始します...");
       const started = await startHybridRecording();
       if (!started) {
         setIsListening(false);

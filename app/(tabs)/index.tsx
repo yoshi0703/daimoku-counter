@@ -474,14 +474,14 @@ export default function CounterScreen() {
         },
         topSection: {
           alignItems: "center",
-          paddingTop: 48,
+          paddingTop: 24,
         },
         centerSection: {
           alignItems: "center",
           gap: SPACING.sm,
         },
         bottomSection: {
-          paddingBottom: SPACING.md,
+          paddingBottom: SPACING.lg,
         },
         transcriptBox: {
           backgroundColor: colors.cardBackground,
@@ -514,7 +514,7 @@ export default function CounterScreen() {
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.content}>
         <View style={styles.topSection}>
-          <GoalProgressRing current={displayTotal} target={dailyTarget} />
+          <GoalProgressRing current={displayTotal} target={dailyTarget} showCount={isSessionActive} />
         </View>
 
         <View style={styles.centerSection}>
