@@ -8,7 +8,7 @@
       }
     },
     "description": "音声認識で唱題の回数を自動カウントするアプリです。手動カウントにも対応し、日々の唱題記録を管理できます。",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "daimokucounter",
