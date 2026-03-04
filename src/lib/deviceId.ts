@@ -8,17 +8,23 @@ function generateUUID(): string {
 }
 
 let cachedDeviceId: string | null = null;
+let pendingPromise: Promise<string> | null = null;
 
-export async function getOrCreateDeviceId(): Promise<string> {
-  if (cachedDeviceId) return cachedDeviceId;
-
-  let deviceId = await AsyncStorage.getItem("@device_id");
-  if (!deviceId) {
-    deviceId = generateUUID();
-    await AsyncStorage.setItem("@device_id", deviceId);
+export function getOrCreateDeviceId(): Promise<string> {
+  if (cachedDeviceId) return Promise.resolve(cachedDeviceId);
+  if (!pendingPromise) {
+    pendingPromise = (async () => {
+      let deviceId = await AsyncStorage.getItem("@device_id");
+      if (!deviceId) {
+        deviceId = generateUUID();
+        await AsyncStorage.setItem("@device_id", deviceId);
+      }
+      cachedDeviceId = deviceId;
+      pendingPromise = null;
+      return deviceId;
+    })();
   }
-  cachedDeviceId = deviceId;
-  return deviceId;
+  return pendingPromise;
 }
 
 export async function getDeviceId(): Promise<string | null> {
