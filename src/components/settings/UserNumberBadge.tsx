@@ -17,10 +17,7 @@ function getTierColor(n: number): string {
 
 export function UserNumberBadge({ userNumber, loading }: Props) {
   const { colors } = useTheme();
-
-  if (loading || userNumber === null) return null;
-
-  const tierColor = getTierColor(userNumber);
+  const tierColor = userNumber !== null ? getTierColor(userNumber) : "#A0A6B4";
 
   const styles = useMemo(
     () =>
@@ -40,6 +37,8 @@ export function UserNumberBadge({ userNumber, loading }: Props) {
       }),
     [tierColor],
   );
+
+  if (loading || userNumber === null) return null;
 
   return (
     <View style={styles.bar}>
