@@ -19,11 +19,15 @@ export const useUserNumber = () => {
 
         const deviceId = await getOrCreateDeviceId();
 
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("user_registrations")
           .upsert({ device_id: deviceId }, { onConflict: "device_id" })
           .select("id")
           .single();
+
+        if (error) {
+          console.error("Failed to upsert user registration:", error);
+        }
 
         if (data?.id) {
           setUserNumber(data.id);
