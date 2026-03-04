@@ -321,7 +321,7 @@ export function useDaimokuRecognition(
       interimResults: true,
       maxAlternatives: 5,
       continuous: true,
-      requiresOnDeviceRecognition: false,
+      requiresOnDeviceRecognition: true,
       addsPunctuation: false,
       iosTaskHint: "dictation",
       contextualStrings: getDaimokuContextualStrings(),
