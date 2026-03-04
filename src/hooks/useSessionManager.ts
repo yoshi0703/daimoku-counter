@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/src/lib/supabase";
 import type { Session } from "@/src/types";
-import { getDeviceId, getOrCreateDeviceId } from "@/src/lib/deviceId";
+import { getOrCreateDeviceId } from "@/src/lib/deviceId";
 
 export function useSessionManager() {
   const saveSession = useCallback(
@@ -37,8 +37,7 @@ export function useSessionManager() {
 
   const getSessions = useCallback(
     async (limit = 20): Promise<Session[]> => {
-      const deviceId = await getDeviceId();
-      if (!deviceId) return [];
+      const deviceId = await getOrCreateDeviceId();
       const { data, error } = await supabase
         .from("daimoku_sessions")
         .select("*")
@@ -57,8 +56,7 @@ export function useSessionManager() {
 
   const getSessionsForDate = useCallback(
     async (date: string): Promise<Session[]> => {
-      const deviceId = await getDeviceId();
-      if (!deviceId) return [];
+      const deviceId = await getOrCreateDeviceId();
       const startOfDay = `${date}T00:00:00.000Z`;
       const endOfDay = `${date}T23:59:59.999Z`;
 
@@ -80,8 +78,7 @@ export function useSessionManager() {
   );
 
   const deleteSession = useCallback(async (id: string) => {
-    const deviceId = await getDeviceId();
-    if (!deviceId) return;
+    const deviceId = await getOrCreateDeviceId();
     const { error } = await supabase
       .from("daimoku_sessions")
       .delete()

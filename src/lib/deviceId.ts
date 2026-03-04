@@ -29,8 +29,3 @@ export function getOrCreateDeviceId(): Promise<string> {
   }
   return pendingPromise;
 }
-
-export async function getDeviceId(): Promise<string | null> {
-  if (cachedDeviceId) return cachedDeviceId;
-  return AsyncStorage.getItem("@device_id");
-}

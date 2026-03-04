@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/src/lib/supabase";
 import type { DailyRecord } from "@/src/types";
 import { getDaysAgo } from "@/src/lib/dateUtils";
-import { getDeviceId } from "@/src/lib/deviceId";
+import { getOrCreateDeviceId } from "@/src/lib/deviceId";
 
 export function useStats() {
   const [dailyRecords, setDailyRecords] = useState<DailyRecord[]>([]);
@@ -13,11 +13,7 @@ export function useStats() {
     setLoading(true);
     const since = getDaysAgo(days);
 
-    const deviceId = await getDeviceId();
-    if (!deviceId) {
-      setLoading(false);
-      return;
-    }
+    const deviceId = await getOrCreateDeviceId();
 
     const { data, error } = await supabase
       .from("daimoku_sessions")
@@ -67,11 +63,7 @@ export function useStats() {
     const today = new Date().toISOString().slice(0, 10);
     const startOfDay = `${today}T00:00:00.000Z`;
 
-    const deviceId = await getDeviceId();
-    if (!deviceId) {
-      setTodayTotal(0);
-      return;
-    }
+    const deviceId = await getOrCreateDeviceId();
 
     const { data, error } = await supabase
       .from("daimoku_sessions")
