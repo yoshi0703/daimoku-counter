@@ -17,11 +17,6 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.yoshi0703.daimokucounter",
-      "entitlements": {
-        "com.apple.security.application-groups": [
-          "group.com.yoshi0703.daimokucounter"
-        ]
-      },
       "infoPlist": {
         "NSSpeechRecognitionUsageDescription": "唱題の回数を数えるために音声認識を使用します",
         "NSMicrophoneUsageDescription": "唱題の音声を聞くためにマイクを使用します",
