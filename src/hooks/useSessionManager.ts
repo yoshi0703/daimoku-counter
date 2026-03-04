@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/src/lib/supabase";
 import type { Session } from "@/src/types";
-import { getDeviceId } from "@/src/lib/deviceId";
+import { getDeviceId, getOrCreateDeviceId } from "@/src/lib/deviceId";
 
 export function useSessionManager() {
   const saveSession = useCallback(
@@ -13,7 +13,7 @@ export function useSessionManager() {
         Date.now() - durationSeconds * 1000,
       ).toISOString();
 
-      const deviceId = await getDeviceId();
+      const deviceId = await getOrCreateDeviceId();
       const { data, error } = await supabase
         .from("daimoku_sessions")
         .insert({
