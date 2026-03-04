@@ -14,14 +14,17 @@ export function getOrCreateDeviceId(): Promise<string> {
   if (cachedDeviceId) return Promise.resolve(cachedDeviceId);
   if (!pendingPromise) {
     pendingPromise = (async () => {
-      let deviceId = await AsyncStorage.getItem("@device_id");
-      if (!deviceId) {
-        deviceId = generateUUID();
-        await AsyncStorage.setItem("@device_id", deviceId);
+      try {
+        let deviceId = await AsyncStorage.getItem("@device_id");
+        if (!deviceId) {
+          deviceId = generateUUID();
+          await AsyncStorage.setItem("@device_id", deviceId);
+        }
+        cachedDeviceId = deviceId;
+        return deviceId;
+      } finally {
+        pendingPromise = null;
       }
-      cachedDeviceId = deviceId;
-      pendingPromise = null;
-      return deviceId;
     })();
   }
   return pendingPromise;
