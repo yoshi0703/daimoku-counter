@@ -7,6 +7,7 @@ import { ThemeProvider, useTheme } from "@/src/contexts/ThemeContext";
 import { useOnboarding } from "@/src/hooks/useOnboarding";
 import { OnboardingScreen } from "@/src/components/onboarding/OnboardingScreen";
 import { getOrCreateDeviceId } from "@/src/lib/deviceId";
+import { migrateOrphanedRows } from "@/src/lib/migrateDeviceId";
 
 function RootContent() {
   const { isDark } = useTheme();
@@ -14,7 +15,7 @@ function RootContent() {
     useOnboarding();
 
   useEffect(() => {
-    getOrCreateDeviceId();
+    getOrCreateDeviceId().then(() => migrateOrphanedRows());
   }, []);
 
   if (isLoading) return null;
