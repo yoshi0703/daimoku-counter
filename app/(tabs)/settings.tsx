@@ -7,13 +7,16 @@ import { ApiKeySettings } from "@/src/components/settings/ApiKeySettings";
 import { FeedbackForm } from "@/src/components/settings/FeedbackForm";
 import { RecognitionModeSetting } from "@/src/components/settings/RecognitionModeSetting";
 import { AudioContributionSetting } from "@/src/components/settings/AudioContributionSetting";
+import { UserNumberBadge } from "@/src/components/settings/UserNumberBadge";
 import { useGoal } from "@/src/hooks/useGoal";
 import { useApiKeys } from "@/src/hooks/useApiKeys";
+import { useUserNumber } from "@/src/hooks/useUserNumber";
 import { useTheme } from "@/src/contexts/ThemeContext";
 import { FONT_SIZE, SPACING, SHADOWS, BORDER_RADIUS } from "@/src/constants/theme";
 
 export default function SettingsScreen() {
   const { colors } = useTheme();
+  const { userNumber, loading: userNumberLoading } = useUserNumber();
   const { goal, updateGoal } = useGoal();
   const {
     deepgramKey,
@@ -77,6 +80,8 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+        <UserNumberBadge userNumber={userNumber} loading={userNumberLoading} />
+
         <GoalSetting
           currentTarget={goal?.daily_target ?? 100}
           onUpdate={updateGoal}
@@ -110,7 +115,7 @@ export default function SettingsScreen() {
             音声認識で「南無妙法蓮華経」を{"\n"}
             リアルタイムにカウントします。
           </Text>
-          <Text style={styles.version}>v2.0.0</Text>
+          <Text style={styles.version}>v2.0.1</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

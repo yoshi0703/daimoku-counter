@@ -8,7 +8,7 @@
       }
     },
     "description": "音声認識で唱題の回数を自動カウントするアプリです。手動カウントにも対応し、日々の唱題記録を管理できます。",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "daimokucounter",
@@ -17,11 +17,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.yoshi0703.daimokucounter",
-      "entitlements": {
-        "com.apple.security.application-groups": [
-          "group.com.yoshi0703.daimokucounter"
-        ]
-      },
+      "entitlements": {},
       "infoPlist": {
         "NSSpeechRecognitionUsageDescription": "唱題の回数を数えるために音声認識を使用します",
         "NSMicrophoneUsageDescription": "唱題の音声を聞くためにマイクを使用します",
