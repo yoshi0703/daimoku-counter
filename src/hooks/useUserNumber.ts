@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Crypto from "expo-crypto";
 import { supabase } from "@/src/lib/supabase";
+
+function generateUUID(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
 
 export const useUserNumber = () => {
   const [userNumber, setUserNumber] = useState<number | null>(null);
@@ -21,7 +27,7 @@ export const useUserNumber = () => {
         // デバイスIDを取得or生成
         let deviceId = await AsyncStorage.getItem("@device_id");
         if (!deviceId) {
-          deviceId = Crypto.randomUUID();
+          deviceId = generateUUID();
           await AsyncStorage.setItem("@device_id", deviceId);
         }
 
