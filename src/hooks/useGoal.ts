@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "@/src/lib/supabase";
 import type { Goal } from "@/src/types";
+import { getOrCreateDeviceId } from "@/src/lib/deviceId";
 
 export function useGoal() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchActiveGoal = useCallback(async () => {
-    const deviceId = await AsyncStorage.getItem("@device_id");
+    const deviceId = await getOrCreateDeviceId();
     if (!deviceId) {
       setLoading(false);
       return;
@@ -36,7 +36,7 @@ export function useGoal() {
 
   const updateGoal = useCallback(
     async (dailyTarget: number) => {
-      const deviceId = await AsyncStorage.getItem("@device_id");
+      const deviceId = await getOrCreateDeviceId();
       if (!deviceId) {
         console.error("device_id not found");
         return;

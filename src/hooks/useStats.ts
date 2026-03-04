@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "@/src/lib/supabase";
 import type { DailyRecord } from "@/src/types";
 import { getDaysAgo } from "@/src/lib/dateUtils";
+import { getDeviceId } from "@/src/lib/deviceId";
 
 export function useStats() {
   const [dailyRecords, setDailyRecords] = useState<DailyRecord[]>([]);
@@ -13,7 +13,7 @@ export function useStats() {
     setLoading(true);
     const since = getDaysAgo(days);
 
-    const deviceId = await AsyncStorage.getItem("@device_id");
+    const deviceId = await getDeviceId();
     if (!deviceId) {
       setLoading(false);
       return;
@@ -67,7 +67,7 @@ export function useStats() {
     const today = new Date().toISOString().slice(0, 10);
     const startOfDay = `${today}T00:00:00.000Z`;
 
-    const deviceId = await AsyncStorage.getItem("@device_id");
+    const deviceId = await getDeviceId();
     if (!deviceId) {
       setTodayTotal(0);
       return;

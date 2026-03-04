@@ -1,11 +1,7 @@
 import { useCallback } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "@/src/lib/supabase";
 import type { Session } from "@/src/types";
-
-async function getDeviceId(): Promise<string | null> {
-  return AsyncStorage.getItem("@device_id");
-}
+import { getDeviceId } from "@/src/lib/deviceId";
 
 export function useSessionManager() {
   const saveSession = useCallback(
@@ -85,6 +81,7 @@ export function useSessionManager() {
 
   const deleteSession = useCallback(async (id: string) => {
     const deviceId = await getDeviceId();
+    if (!deviceId) return;
     const { error } = await supabase
       .from("daimoku_sessions")
       .delete()
