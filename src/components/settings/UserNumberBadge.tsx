@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet } from "react-native";
 import { useMemo } from "react";
-import { useTheme } from "@/src/contexts/ThemeContext";
 import { FONT_SIZE, BORDER_RADIUS } from "@/src/constants/theme";
 
 interface Props {
@@ -16,7 +15,6 @@ function getTierColor(n: number): string {
 }
 
 export function UserNumberBadge({ userNumber, loading }: Props) {
-  const { colors } = useTheme();
   const tierColor = userNumber !== null ? getTierColor(userNumber) : "#A0A6B4";
 
   const styles = useMemo(

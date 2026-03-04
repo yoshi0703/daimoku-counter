@@ -30,8 +30,9 @@ export const useUserNumber = () => {
         }
 
         if (data?.id) {
-          setUserNumber(data.id);
-          await AsyncStorage.setItem("@user_number", data.id.toString());
+          const id = Number(data.id);
+          setUserNumber(id);
+          await AsyncStorage.setItem("@user_number", String(id));
         }
       } catch (error) {
         console.error("Failed to initialize user number:", error);
