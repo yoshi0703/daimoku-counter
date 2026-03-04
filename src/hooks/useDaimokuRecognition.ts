@@ -607,7 +607,10 @@ export function useDaimokuRecognition(
       if (!sessionActiveRef.current) return;
 
       const next = new Audio.Recording();
-      await next.prepareToRecordAsync(WHISPER_OPTIMIZED_RECORDING);
+      await next.prepareToRecordAsync({
+        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+        isMeteringEnabled: true,
+      });
       if (!sessionActiveRef.current) {
         await next.stopAndUnloadAsync().catch(() => {});
         return;
@@ -665,7 +668,10 @@ export function useDaimokuRecognition(
       resetHybridSegmentationState();
 
       const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(WHISPER_OPTIMIZED_RECORDING);
+      await recording.prepareToRecordAsync({
+        ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+        isMeteringEnabled: true,
+      });
       recording.setProgressUpdateInterval(HYBRID_PROGRESS_UPDATE_MS);
       recording.setOnRecordingStatusUpdate((status) => {
         if (!sessionActiveRef.current || !status.isRecording) return;
