@@ -149,17 +149,19 @@ export default function CounterScreen() {
         await fetchTodayTotal();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-        if (
-          audioContributionEnabled &&
-          recordingUri &&
-          (mode === "local" || mode === "whisper" || mode === "hybrid")
-        ) {
-          uploadAudioContribution({
-            uri: recordingUri,
-            durationSeconds: elapsedSeconds,
-            daimokuCount: finalizedCount,
-            recognitionMode: mode,
-          });
+        if (mode === "local" || mode === "whisper" || mode === "hybrid") {
+          if (audioContributionEnabled && recordingUri) {
+            uploadAudioContribution({
+              uri: recordingUri,
+              durationSeconds: elapsedSeconds,
+              daimokuCount: finalizedCount,
+              recognitionMode: mode,
+            });
+          } else {
+            console.log(
+              `[audio-contribution] skipped: enabled=${audioContributionEnabled}, uri=${!!recordingUri}, mode=${mode}`,
+            );
+          }
         }
       }
     } finally {

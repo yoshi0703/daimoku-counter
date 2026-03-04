@@ -739,6 +739,7 @@ export function useDaimokuRecognition(
     hybridDeferredUrisRef.current = [];
 
     if (deferredUris.length > 0) {
+      const keepUri = lastRecordingUriRef.current;
       setLastTranscript(
         `正確なカウントを検証中です（${deferredUris.length}セグメント）。アプリを閉じないでください。`,
       );
@@ -756,10 +757,13 @@ export function useDaimokuRecognition(
         } catch (e: any) {
           console.warn("Deferred whisper chunk error:", e);
         } finally {
-          try {
-            await FileSystem.deleteAsync(uri, { idempotent: true });
-          } catch {
-            // ignore
+          // アップロード用に保持するURIは削除しない
+          if (uri !== keepUri) {
+            try {
+              await FileSystem.deleteAsync(uri, { idempotent: true });
+            } catch {
+              // ignore
+            }
           }
         }
       }
