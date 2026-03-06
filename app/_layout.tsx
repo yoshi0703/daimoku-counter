@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
@@ -5,11 +6,16 @@ import { ApiKeysProvider } from "@/src/hooks/useApiKeys";
 import { ThemeProvider, useTheme } from "@/src/contexts/ThemeContext";
 import { useOnboarding } from "@/src/hooks/useOnboarding";
 import { OnboardingScreen } from "@/src/components/onboarding/OnboardingScreen";
+import { getOrCreateDeviceId } from "@/src/lib/deviceId";
 
 function RootContent() {
   const { isDark } = useTheme();
   const { isLoading, hasCompletedOnboarding, completeOnboarding } =
     useOnboarding();
+
+  useEffect(() => {
+    getOrCreateDeviceId();
+  }, []);
 
   if (isLoading) return null;
 

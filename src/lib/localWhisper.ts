@@ -15,6 +15,10 @@ type WhisperModuleType = {
         language?: string;
         translate?: boolean;
         maxThreads?: number;
+        beamSize?: number;
+        bestOf?: number;
+        temperature?: number;
+        prompt?: string;
       },
     ) => {
       stop: () => Promise<void>;
@@ -138,6 +142,10 @@ export async function transcribeWithLocalWhisper(
       language: "ja",
       translate: false,
       maxThreads: 4,
+      beamSize: 1,
+      bestOf: 1,
+      temperature: 0,
+      prompt: "南無妙法蓮華経",
     });
     const { result, isAborted } = await promise;
 

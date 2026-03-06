@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Crypto from "expo-crypto";
 import { supabase } from "@/src/lib/supabase";
+import { getOrCreateDeviceId } from "@/src/lib/deviceId";
 
 export const useUserNumber = () => {
   const [userNumber, setUserNumber] = useState<number | null>(null);
@@ -10,7 +10,6 @@ export const useUserNumber = () => {
   useEffect(() => {
     const initializeUserNumber = async () => {
       try {
-        // キャッシュから読み込み
         const cachedUserNumber = await AsyncStorage.getItem("@user_number");
         if (cachedUserNumber) {
           setUserNumber(parseInt(cachedUserNumber, 10));
@@ -18,23 +17,22 @@ export const useUserNumber = () => {
           return;
         }
 
-        // デバイスIDを取得or生成
-        let deviceId = await AsyncStorage.getItem("@device_id");
-        if (!deviceId) {
-          deviceId = Crypto.randomUUID();
-          await AsyncStorage.setItem("@device_id", deviceId);
-        }
+        const deviceId = await getOrCreateDeviceId();
 
-        // Supabaseにupsert
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("user_registrations")
           .upsert({ device_id: deviceId }, { onConflict: "device_id" })
           .select("id")
           .single();
 
+        if (error) {
+          console.error("Failed to upsert user registration:", error);
+        }
+
         if (data?.id) {
-          setUserNumber(data.id);
-          await AsyncStorage.setItem("@user_number", data.id.toString());
+          const id = Number(data.id);
+          setUserNumber(id);
+          await AsyncStorage.setItem("@user_number", String(id));
         }
       } catch (error) {
         console.error("Failed to initialize user number:", error);

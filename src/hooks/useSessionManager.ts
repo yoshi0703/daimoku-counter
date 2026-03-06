@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/src/lib/supabase";
 import type { Session } from "@/src/types";
+import { getOrCreateDeviceId } from "@/src/lib/deviceId";
 
 export function useSessionManager() {
   const saveSession = useCallback(
@@ -12,6 +13,7 @@ export function useSessionManager() {
         Date.now() - durationSeconds * 1000,
       ).toISOString();
 
+      const deviceId = await getOrCreateDeviceId();
       const { data, error } = await supabase
         .from("daimoku_sessions")
         .insert({
@@ -19,6 +21,7 @@ export function useSessionManager() {
           ended_at: now,
           count,
           duration_seconds: durationSeconds,
+          device_id: deviceId,
         })
         .select()
         .single();
@@ -34,9 +37,11 @@ export function useSessionManager() {
 
   const getSessions = useCallback(
     async (limit = 20): Promise<Session[]> => {
+      const deviceId = await getOrCreateDeviceId();
       const { data, error } = await supabase
         .from("daimoku_sessions")
         .select("*")
+        .eq("device_id", deviceId)
         .order("started_at", { ascending: false })
         .limit(limit);
 
@@ -51,12 +56,14 @@ export function useSessionManager() {
 
   const getSessionsForDate = useCallback(
     async (date: string): Promise<Session[]> => {
+      const deviceId = await getOrCreateDeviceId();
       const startOfDay = `${date}T00:00:00.000Z`;
       const endOfDay = `${date}T23:59:59.999Z`;
 
       const { data, error } = await supabase
         .from("daimoku_sessions")
         .select("*")
+        .eq("device_id", deviceId)
         .gte("started_at", startOfDay)
         .lte("started_at", endOfDay)
         .order("started_at", { ascending: false });
@@ -71,10 +78,12 @@ export function useSessionManager() {
   );
 
   const deleteSession = useCallback(async (id: string) => {
+    const deviceId = await getOrCreateDeviceId();
     const { error } = await supabase
       .from("daimoku_sessions")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .eq("device_id", deviceId);
 
     if (error) {
       console.error("Failed to delete session:", error);

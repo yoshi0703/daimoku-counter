@@ -149,7 +149,7 @@ export function CounterControls({
       >
         <View style={styles.gradientButton}>
           <Text style={styles.startText}>
-            {speechAvailable ? "唱題を始める" : "カウントを始める"}
+            スタート
           </Text>
         </View>
       </Pressable>

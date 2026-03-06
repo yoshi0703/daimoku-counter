@@ -1,16 +1,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/src/lib/supabase";
 import type { Goal } from "@/src/types";
+import { getOrCreateDeviceId } from "@/src/lib/deviceId";
 
 export function useGoal() {
   const [goal, setGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchActiveGoal = useCallback(async () => {
+    const deviceId = await getOrCreateDeviceId();
+    if (!deviceId) {
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("daimoku_goals")
       .select("*")
       .eq("is_active", true)
+      .eq("device_id", deviceId)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
@@ -28,16 +36,23 @@ export function useGoal() {
 
   const updateGoal = useCallback(
     async (dailyTarget: number) => {
+      const deviceId = await getOrCreateDeviceId();
+      if (!deviceId) {
+        console.error("device_id not found");
+        return;
+      }
+
       // 既存の目標を非アクティブに
       await supabase
         .from("daimoku_goals")
         .update({ is_active: false })
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .eq("device_id", deviceId);
 
       // 新しい目標を作成
       const { data, error } = await supabase
         .from("daimoku_goals")
-        .insert({ daily_target: dailyTarget, is_active: true })
+        .insert({ daily_target: dailyTarget, is_active: true, device_id: deviceId })
         .select()
         .single();
 

@@ -7,6 +7,7 @@ import { FONT_SIZE, SPACING } from "@/src/constants/theme";
 interface Props {
   current: number;
   target: number;
+  showCount?: boolean;
 }
 
 const SIZE = 140;
@@ -14,7 +15,7 @@ const STROKE_WIDTH = 5;
 const RADIUS = (SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-export function GoalProgressRing({ current, target }: Props) {
+export function GoalProgressRing({ current, target, showCount = false }: Props) {
   const { colors } = useTheme();
   const progress = Math.min(current / Math.max(target, 1), 1);
   const strokeDashoffset = CIRCUMFERENCE * (1 - progress);
@@ -42,10 +43,16 @@ export function GoalProgressRing({ current, target }: Props) {
           fontWeight: "600",
           color: colors.primary,
         },
+        countLabel: {
+          fontSize: FONT_SIZE.sm,
+          fontWeight: "600",
+          color: colors.text,
+          marginTop: 2,
+        },
         targetLabel: {
           fontSize: FONT_SIZE.xs,
           color: colors.textTertiary,
-          marginTop: SPACING.xs,
+          marginTop: 2,
         },
       }),
     [colors],
@@ -79,6 +86,11 @@ export function GoalProgressRing({ current, target }: Props) {
         <Text style={styles.percentage}>
           {Math.round(progress * 100)}%
         </Text>
+        {showCount && (
+          <Text style={styles.countLabel}>
+            {current.toLocaleString()}遍
+          </Text>
+        )}
         <Text style={styles.targetLabel}>
           目標 {target.toLocaleString()}
         </Text>
