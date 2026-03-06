@@ -35,6 +35,91 @@ function normalizeForCount(text: string): string {
     .toLowerCase();
 }
 
+const CANONICAL_DAIMOKU = normalizeForCount("なむみょうほうれんげきょう");
+const DAIMOKU_CORE = normalizeForCount("みょうほうれんげきょう");
+const DAIMOKU_PREFIX = normalizeForCount("なむ");
+const DAIMOKU_SUFFIX = normalizeForCount("きょう");
+
+const WHISPER_REPAIR_RULES: Array<[RegExp, string]> = [
+  [/なも(?=みょう)/g, "なむ"],
+  [/なん(?=みょう)/g, "なむ"],
+  [/なんむ(?=みょう)/g, "なむ"],
+  [/な(?=みょうほうれんげきょう)/g, "なむ"],
+  [/みょー/g, "みょう"],
+  [/ほー/g, "ほう"],
+  [/れんげきょ(?!う)/g, "れんげきょう"],
+  [/れんげきょー/g, "れんげきょう"],
+  [/れんげきよ/g, "れんげきょう"],
+  [/れんげきょ/g, "れんげきょう"],
+  [/蓮華教/g, "蓮華経"],
+  [/蓮華經/g, "蓮華経"],
+];
+
+function repairWhisperTranscript(text: string): string {
+  let normalized = normalizeForCount(text);
+
+  for (const [pattern, replacement] of WHISPER_REPAIR_RULES) {
+    normalized = normalized.replace(pattern, replacement);
+  }
+
+  return normalized;
+}
+
+function countByDirectVariants(normalized: string): number {
+  let maxCount = 0;
+  for (const variant of DAIMOKU_VARIANTS) {
+    const normalizedVariant = normalizeForCount(variant);
+    let count = 0;
+    let searchFrom = 0;
+    while (true) {
+      const idx = normalized.indexOf(normalizedVariant, searchFrom);
+      if (idx === -1) break;
+      count++;
+      searchFrom = idx + normalizedVariant.length;
+    }
+    maxCount = Math.max(maxCount, count);
+  }
+  return maxCount;
+}
+
+function countBySlidingRepair(normalized: string): number {
+  let count = 0;
+  let index = 0;
+
+  while (index < normalized.length) {
+    const remaining = normalized.slice(index);
+
+    if (remaining.startsWith(CANONICAL_DAIMOKU)) {
+      count++;
+      index += CANONICAL_DAIMOKU.length;
+      continue;
+    }
+
+    const coreIndex = remaining.indexOf(DAIMOKU_CORE);
+    if (coreIndex === -1) break;
+
+    const candidateStart = index + coreIndex;
+    const prefixWindowStart = Math.max(index, candidateStart - 4);
+    const prefixWindow = normalized.slice(prefixWindowStart, candidateStart);
+    const hasPrefix = prefixWindow.includes(DAIMOKU_PREFIX);
+    const suffixWindow = normalized.slice(
+      candidateStart + DAIMOKU_CORE.length,
+      candidateStart + DAIMOKU_CORE.length + 2,
+    );
+    const hasSuffix = suffixWindow.startsWith(DAIMOKU_SUFFIX) || suffixWindow.length === 0;
+
+    if (hasPrefix || hasSuffix) {
+      count++;
+      index = candidateStart + DAIMOKU_CORE.length;
+      continue;
+    }
+
+    index = candidateStart + 1;
+  }
+
+  return count;
+}
+
 const DAIMOKU_CONTEXTUAL_STRINGS = Array.from(
   new Set([
     ...DAIMOKU_VARIANTS,
@@ -58,20 +143,13 @@ type RecognitionResultLike = {
  */
 export function countOccurrences(text: string): number {
   const normalized = normalizeForCount(text);
+  const repaired = repairWhisperTranscript(text);
 
-  let maxCount = 0;
-  for (const variant of DAIMOKU_VARIANTS) {
-    const normalizedVariant = normalizeForCount(variant);
-    let count = 0;
-    let searchFrom = 0;
-    while (true) {
-      const idx = normalized.indexOf(normalizedVariant, searchFrom);
-      if (idx === -1) break;
-      count++;
-      searchFrom = idx + normalizedVariant.length;
-    }
-    maxCount = Math.max(maxCount, count);
-  }
+  let maxCount = Math.max(
+    countByDirectVariants(normalized),
+    countByDirectVariants(repaired),
+    countBySlidingRepair(repaired),
+  );
 
   // 既知バリアントで拾えない軽微な誤認識を補足
   if (maxCount === 0) {
@@ -82,7 +160,7 @@ export function countOccurrences(text: string): number {
       /な[んむも]?みょ[うー]?ほ[うー]?れんげきょ[うー]?/g,
     ];
     for (const pattern of fuzzyPatterns) {
-      const matches = normalized.match(pattern);
+      const matches = repaired.match(pattern) ?? normalized.match(pattern);
       if (matches) {
         maxCount = Math.max(maxCount, matches.length);
       }
